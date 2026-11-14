@@ -22,8 +22,8 @@ const shots = [
   ["11-off-the-clock", "#off-the-clock", 1.1],
   ["12-playground", "#playground", 0.1],
   ["13-stickers", "#playground", 1.0],
-  ["14-toolbox-open", "#toolbox", 0.1, "gift"],
-  ["15-contact", "#contact", 0, "phone"],
+  ["14-toolbox-burst", "#toolbox", 0.35, "wait"],
+  ["15-contact", "#contact", 0, "wait"],
 ];
 
 const errors = [];
@@ -63,14 +63,7 @@ for (const [label, vp] of [
       continue;
     }
     await page.waitForTimeout(1300);
-    if (action === "gift") {
-      await page.click("#toolbox button[aria-controls='skills-grid']");
-      await page.waitForTimeout(1900);
-    }
-    if (action === "phone") {
-      await page.click("#contact button[aria-controls='call-bubble']");
-      await page.waitForTimeout(1700);
-    }
+    if (action === "wait") await page.waitForTimeout(2600); // gift burst / phone rings then answers
     await page.screenshot({ path: `${out}/${label}-${name}.jpg`, type: "jpeg", quality: 70 });
   }
   // Horizontal overflow check

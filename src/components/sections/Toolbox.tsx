@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { toolbox } from "@/content/site";
-import { gsap, prefersReducedMotion, useIsoLayoutEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, ScrollTrigger, useIsoLayoutEffect } from "@/lib/gsap";
+import { sfx } from "@/lib/sound";
 
 const tilt = (i: number) => `${((i * 37) % 7) - 3}deg`;
 
@@ -67,59 +68,95 @@ function GiftBox({ lidRef }: { lidRef: React.RefObject<HTMLDivElement | null> })
   );
 }
 
-/** Toolbox (B): "Everything I know, unwrapped." Click the box and the skills fly out as tape labels. */
+const CONFETTI = Array.from({ length: 26 }, (_, i) => ({
+  color: ["#f6e05e", "#e3262f", "#141414", "#f5f2eb"][i % 4],
+  round: i % 3 === 0,
+  w: 8 + ((i * 7) % 9),
+}));
+
+/**
+ * Toolbox (B): "Everything I know, unwrapped." Scroll to it and the box bursts
+ * by itself: it shakes, the lid blows off with a pop, confetti flies and the
+ * skills land as tape labels. Click the box to burst it again.
+ */
 export function Toolbox() {
-  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLElement>(null);
   const lidRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const first = useRef(true);
+  const [burst, setBurst] = useState(false);
+  const playRef = useRef<() => void>(() => {});
 
   useIsoLayoutEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    const el = root.current;
     const lid = lidRef.current;
     const box = boxRef.current;
     const grid = gridRef.current;
-    if (!lid || !box) return;
-    const reduced = prefersReducedMotion();
+    if (!el || !lid || !box || !grid) return;
+    const confetti = gsap.utils.toArray<HTMLElement>("[data-confetti]", el);
+    const tapes = grid.querySelectorAll<HTMLElement>("[data-tape]");
+    const heads = grid.querySelectorAll<HTMLElement>("[data-group-head]");
 
-    if (!open) {
-      gsap.to(lid, { x: 0, y: 0, rotationZ: 0, rotationX: 0, duration: reduced ? 0 : 0.5, ease: "back.out(1.4)" });
+    if (prefersReducedMotion()) {
+      const w = box.offsetWidth;
+      gsap.set(lid, { x: w * 0.55, y: -w * 0.38, rotationZ: 24 });
+      setBurst(true);
       return;
     }
-    if (reduced) {
-      gsap.set(lid, { x: box.offsetWidth * 0.55, y: -box.offsetWidth * 0.38, rotationZ: 24 });
-      return;
-    }
-    const tl = gsap.timeline();
-    tl.to(box, { rotation: 4, duration: 0.06, yoyo: true, repeat: 5, ease: "none" })
-      .set(box, { rotation: 0 })
-      .to(lid, { y: -box.offsetWidth * 0.38, x: box.offsetWidth * 0.55, rotationZ: 26, rotationX: -18, duration: 0.6, ease: "power3.out" });
 
-    if (grid) {
+    let tl: gsap.core.Timeline | null = null;
+    const play = () => {
+      tl?.kill();
+      const w = box.offsetWidth;
       const b = box.getBoundingClientRect();
       const cx = b.left + b.width / 2;
       const cy = b.top + b.height / 2;
-      const tapes = grid.querySelectorAll<HTMLElement>("[data-tape]");
-      const heads = grid.querySelectorAll<HTMLElement>("[data-group-head]");
+      gsap.set(lid, { x: 0, y: 0, rotationZ: 0, rotationX: 0 });
+      gsap.set(confetti, { x: 0, y: 0, rotation: 0, opacity: 0, scale: 1 });
       tapes.forEach((t) => {
         const r = t.getBoundingClientRect();
         gsap.set(t, { x: cx - (r.left + r.width / 2), y: cy - (r.top + r.height / 2), scale: 0.2, opacity: 0 });
       });
       gsap.set(heads, { opacity: 0, y: 16 });
-      tl.to(tapes, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.3)", stagger: { each: 0.018, from: "random" } }, 0.5);
-      tl.to(heads, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 }, 0.9);
-    }
-    return () => {
-      tl.kill();
+
+      tl = gsap.timeline();
+      tl.to(box, { rotation: 5, duration: 0.05, yoyo: true, repeat: 7, ease: "none" })
+        .to(box, { scaleY: 0.86, scaleX: 1.08, duration: 0.12, ease: "power2.in" }, ">-0.05")
+        .call(() => {
+          sfx.burst();
+          setBurst(true);
+        })
+        .to(box, { rotation: 0, scaleY: 1, scaleX: 1, duration: 0.6, ease: "elastic.out(1.2, 0.35)" })
+        .to(lid, { y: -w * 1.15, x: w * 0.3, rotationZ: 70, rotationX: -40, duration: 0.35, ease: "power2.out" }, "<")
+        .to(lid, { y: -w * 0.38, x: w * 0.6, rotationZ: 24, rotationX: -18, duration: 0.7, ease: "bounce.out" }, ">-0.02")
+        .to(
+          confetti,
+          {
+            x: () => gsap.utils.random(-w * 2.2, w * 2.2),
+            y: () => gsap.utils.random(-w * 1.6, -w * 0.3),
+            rotation: () => gsap.utils.random(-540, 540),
+            opacity: 1,
+            duration: 0.55,
+            ease: "power3.out",
+            stagger: 0.008,
+          },
+          "<-0.65",
+        )
+        .to(confetti, { y: `+=${w * 1.8}`, opacity: 0, duration: 1.1, ease: "power1.in", stagger: 0.01 }, ">-0.1")
+        .to(tapes, { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.3)", stagger: { each: 0.016, from: "random" } }, "<-0.9")
+        .to(heads, { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 }, "<0.3");
     };
-  }, [open]);
+    playRef.current = play;
+
+    const st = ScrollTrigger.create({ trigger: box, start: "top 72%", once: true, onEnter: play });
+    return () => {
+      st.kill();
+      tl?.kill();
+    };
+  }, []);
 
   return (
-    <section id="toolbox" aria-labelledby="tb-h" className="wrap py-24 md:py-32">
+    <section ref={root} id="toolbox" aria-labelledby="tb-h" className="wrap py-24 md:py-32">
       <p className="kicker">{toolbox.kicker}</p>
       <h2 id="tb-h" className="t-h2 mt-2">
         {toolbox.headingLead}
@@ -129,33 +166,38 @@ export function Toolbox() {
       <div className="mt-20 flex flex-col items-center md:mt-24">
         <button
           type="button"
-          aria-expanded={open}
-          aria-controls="skills-grid"
-          onClick={() => setOpen((v) => !v)}
-          className="group grid h-[15rem] w-[15rem] cursor-pointer place-items-center rounded-3xl [--s:140px] [perspective:900px] md:h-[20rem] md:w-[20rem] md:[--s:190px]"
+          data-sfx="none"
+          onClick={() => playRef.current()}
+          className="group relative grid h-[15rem] w-[15rem] cursor-pointer place-items-center rounded-3xl [--s:140px] [perspective:900px] md:h-[20rem] md:w-[20rem] md:[--s:190px]"
         >
-          <span className="sr-only">{open ? "Wrap the toolbox back up" : "Unwrap my toolbox"}</span>
-          <div ref={boxRef} className="transition-[scale,rotate] duration-300 group-hover:scale-105 group-hover:-rotate-2">
+          <span className="sr-only">Burst the gift box again</span>
+          <div ref={boxRef} className="transition-[scale] duration-300 group-hover:scale-105">
             <GiftBox lidRef={lidRef} />
           </div>
+          <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-1/2">
+            {CONFETTI.map((c, i) => (
+              <span
+                key={i}
+                data-confetti
+                className="absolute block border-2 border-ink opacity-0"
+                style={{
+                  width: c.w,
+                  height: c.round ? c.w : c.w * 0.55,
+                  background: c.color,
+                  borderRadius: c.round ? "999px" : "2px",
+                  marginLeft: -c.w / 2,
+                  marginTop: -c.w / 2,
+                }}
+              />
+            ))}
+          </span>
         </button>
-        {open ? (
-          <button type="button" onClick={() => setOpen(false)} className="pill pill-grey mt-4 text-sm">
-            {toolbox.reset} <span aria-hidden="true">↺</span>
-          </button>
-        ) : (
-          <p className="mt-4 font-serif text-xl italic" aria-hidden="true">
-            {toolbox.cta} ↑
-          </p>
-        )}
+        <p className={`mt-4 font-serif text-lg text-muted italic transition-opacity duration-500 ${burst ? "opacity-100" : "opacity-0"}`} aria-hidden="true">
+          {toolbox.again}
+        </p>
       </div>
 
-      <div
-        id="skills-grid"
-        ref={gridRef}
-        data-open={open}
-        className="tb-grid mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-5"
-      >
+      <div id="skills-grid" ref={gridRef} className="tb-grid mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
         {toolbox.groups.map((g, gi) => (
           <div key={g.heading}>
             <h3 data-group-head className="t-pixel border-b-2 border-ink pb-2 text-[1.05rem]">

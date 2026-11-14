@@ -137,6 +137,8 @@ export type Leadership = {
   org: string;
   dates: string;
   description: string;
+  /** Ink emblem on the patch. */
+  emblem: "bulb" | "tools" | "ball" | "book";
 };
 
 export type SkillGroup = {

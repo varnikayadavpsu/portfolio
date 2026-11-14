@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { offTheClock } from "@/content/site";
 import type { SpillItem } from "@/content/types";
 import { BIG_MOTION, gsap, SMALL_MOTION, useIsoLayoutEffect } from "@/lib/gsap";
+import { sfx, type SfxName } from "@/lib/sound";
 import { EightBallArt } from "@/components/ink/Art";
 
 /* Where each object lands (SVG units; the head's opening is at 150, 110). */
@@ -24,6 +25,52 @@ const LAND: [number, number, number][] = [
 ];
 const mobileLand = LAND.map(([x, y, r]) => [150 + (x - 150) * 0.52, 110 + (y - 110) * 0.72, r] as const);
 const ORIGIN = { x: 150, y: 112 };
+
+/** What each object says when you poke it. */
+const VOICE: Record<SpillItem["kind"], { sound: SfxName; label: (i: SpillItem) => string }> = {
+  eightball: { sound: "clack", label: () => "8-ball: billiards" },
+  bubble: { sound: "blips", label: (i) => (i.kind === "bubble" ? `Hello in ${i.label}` : "Hello") },
+  cat: { sound: "meow", label: () => "A cat" },
+  candles: { sound: "coin", label: () => "A candlestick chart: trading" },
+  book: { sound: "pages", label: () => "A number theory book" },
+  horse: { sound: "neigh", label: () => "A horse" },
+  laptop: { sound: "keys", label: () => "A laptop: coding" },
+  network: { sound: "beeps", label: () => "A neural network: machine learning" },
+  meme: { sound: "boing", label: () => "A meme" },
+};
+
+/** One object out of the head: hoverable, clickable and keyboard reachable, with its own sound. */
+function Poke({ item }: { item: SpillItem }) {
+  const v = VOICE[item.kind];
+  const hit = (el: Element) => {
+    el.classList.remove("is-hit");
+    void (el as HTMLElement).getBoundingClientRect?.();
+    el.classList.add("is-hit");
+    window.setTimeout(() => el.classList.remove("is-hit"), 460);
+  };
+  return (
+    <g
+      className="spill"
+      role="button"
+      tabIndex={0}
+      aria-label={v.label(item)}
+      data-sfx={v.sound}
+      data-sfx-hover={v.sound}
+      onClick={(e) => hit(e.currentTarget)}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        sfx[v.sound]();
+        hit(e.currentTarget);
+      }}
+    >
+      <circle className="spill-ring" r="66" fill="transparent" />
+      <g className="spill-art">
+        <Item item={item} />
+      </g>
+    </g>
+  );
+}
 
 function Item({ item }: { item: SpillItem }) {
   switch (item.kind) {
@@ -278,13 +325,13 @@ export function OffTheClock() {
             data-head-svg
             viewBox={DESK_VB}
             className="relative h-auto max-h-full w-full max-w-[64rem] overflow-visible motion-lg:h-full"
-            role="img"
-            aria-label="An ink drawing of Varnika’s head popping open: out come an 8-ball, hellos in Hindi, English and Punjabi, a cat, a horse, a candlestick chart, a number theory book, a laptop, a neural network and a meme."
+            role="group"
+            aria-label="An ink drawing of Varnika’s head popping open. Each thing that spills out makes a sound when you click it."
           >
             <Head />
             {offTheClock.spill.map((it, i) => (
               <g key={i} data-spill transform={`translate(${LAND[i][0]} ${LAND[i][1]}) rotate(${LAND[i][2]})`}>
-                <Item item={it} />
+                <Poke item={it} />
               </g>
             ))}
           </svg>

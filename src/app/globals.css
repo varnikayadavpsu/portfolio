@@ -325,35 +325,6 @@ html[data-splash="off"] .splash {
     box-shadow: inset 0 0 0 2px var(--color-ink);
   }
 
-  /* ── Pixel marquee (A) ──────────────────────────────────────────────────── */
-  .marquee {
-    display: flex;
-    overflow: hidden;
-    border-block: 2px solid var(--color-ink);
-    user-select: none;
-  }
-  .marquee-track {
-    display: flex;
-    flex: none;
-    animation: marquee 28s linear infinite;
-  }
-  .marquee:hover .marquee-track {
-    animation-play-state: paused;
-  }
-  .marquee-item {
-    flex: none;
-    padding: 0.5rem 0.9rem;
-    font-family: var(--font-pixel);
-    font-size: clamp(1.5rem, 3.2vw, 2.4rem);
-    line-height: 1;
-    white-space: nowrap;
-  }
-  @keyframes marquee {
-    to {
-      transform: translateX(-100%);
-    }
-  }
-
   /* ── Hero typing (A) ────────────────────────────────────────────────────── */
   /* Letters take no space until typed, so the caret follows them. */
   .type-ch {
@@ -627,17 +598,35 @@ html[data-splash="off"] .splash {
     color: var(--color-white);
   }
   .wipe-word {
-    display: flex;
-    overflow: hidden;
+    display: block;
+    white-space: nowrap;
+    text-align: center;
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 0.9;
-    font-size: clamp(2.6rem, 11.5vw, 11rem);
+    font-size: var(--fs, clamp(2.6rem, 11.5vw, 11rem));
     padding-block: 0.05em;
   }
-  .wipe-word > span {
-    display: inline-block;
-    white-space: pre;
+  .wipe-echo {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgb(255 255 255 / 0.9);
+    transform: translateY(calc(var(--o) * 92%));
+    pointer-events: none;
+  }
+  .wipe-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgb(245 242 235 / 0.13) 1.3px, transparent 1.7px);
+    background-size: 15px 15px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  }
+  .wipe-corner {
+    position: absolute;
+    font-family: var(--font-pixel);
+    font-size: 0.92rem;
+    line-height: 1.3;
+    color: rgb(255 255 255 / 0.85);
+    max-width: 40%;
   }
   @media (prefers-reduced-motion: reduce) {
     .wipe {
@@ -728,17 +717,10 @@ html[data-splash="off"] .splash {
     top: 50%;
     transform-style: preserve-3d;
   }
+  /* turned by JS (useRingSpin): steady spin, faster on scroll, draggable */
   .alb-spin {
     transform-style: preserve-3d;
-    animation: alb-spin 46s linear infinite;
-  }
-  .alb-stage:hover .alb-spin {
-    animation-play-state: paused;
-  }
-  @keyframes alb-spin {
-    to {
-      transform: rotateY(-360deg);
-    }
+    will-change: transform;
   }
   .alb-item {
     position: absolute;
@@ -787,8 +769,12 @@ html[data-splash="off"] .splash {
       inset 0 -3px 0 var(--color-ink);
   }
 
-  .js .tb-grid[data-open="false"] {
-    display: none;
+  /* skills wait inside the box until it bursts (JS + motion only) */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .tb-grid [data-tape],
+    .js .tb-grid [data-group-head] {
+      opacity: 0;
+    }
   }
   .tb-grid .tape {
     transition: none;
@@ -831,8 +817,6 @@ html[data-splash="off"] .splash {
 
 /* ── Reduced motion: stop every CSS loop ────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track,
-  .alb-spin,
   .hs-dot,
   .caret,
   .screen-caret {
@@ -846,5 +830,159 @@ html[data-splash="off"] .splash {
   }
   .splash {
     display: none;
+  }
+}
+
+/* ── Round 2: motion + interaction details ──────────────────────────────── */
+@layer components {
+  /* bobbing arrow under the hero's tape label */
+  .bob {
+    animation: bob 1.6s var(--ease-in-out-quart) infinite;
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(6px);
+    }
+  }
+  /* hero stickers wiggle when you hover them */
+  .wiggle:hover > svg {
+    animation: wiggle 0.5s ease-in-out;
+  }
+  @keyframes wiggle {
+    25% {
+      transform: rotate(-12deg) scale(1.08);
+    }
+    60% {
+      transform: rotate(9deg);
+    }
+  }
+
+  /* experience: ID badges hanging off a line */
+  .badge {
+    transform-origin: 50% 0;
+  }
+  .badge-card {
+    transform-origin: 50% -2.2rem;
+    transition: transform 0.6s var(--ease-back);
+  }
+  .badge:hover .badge-card {
+    animation: swing 1.4s ease-out;
+  }
+  @keyframes swing {
+    15% {
+      transform: rotate(5deg);
+    }
+    35% {
+      transform: rotate(-4deg);
+    }
+    55% {
+      transform: rotate(2.5deg);
+    }
+    75% {
+      transform: rotate(-1deg);
+    }
+  }
+  /* experience: hand-drawn marks on the big numbers */
+  .stat-mark {
+    pointer-events: none;
+    overflow: visible;
+  }
+  .stat-mark path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    opacity: 0;
+    transition:
+      stroke-dashoffset 0.9s var(--ease-out-quart),
+      opacity 0.1s;
+  }
+  .is-drawn .stat-mark path,
+  .no-js .stat-mark path {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  .stat-mark--hl {
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.7s var(--ease-out-quart);
+  }
+  .stat-mark--hl path {
+    opacity: 1;
+  }
+  .is-drawn .stat-mark--hl,
+  .no-js .stat-mark--hl {
+    transform: none;
+  }
+
+  /* leadership: stitched patches */
+  .patch {
+    transition:
+      transform 0.35s var(--ease-back),
+      box-shadow 0.35s;
+  }
+  .patch:hover {
+    transform: translateY(-6px) scale(1.02);
+    rotate: 0deg !important;
+    box-shadow: 0 18px 30px -18px rgb(20 20 20 / 0.5);
+  }
+
+  /* off the clock: items you can poke */
+  .spill {
+    cursor: pointer;
+    outline: none;
+  }
+  .spill .spill-art {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    transition: transform 0.25s var(--ease-back);
+  }
+  .spill:hover .spill-art,
+  .spill:focus-visible .spill-art {
+    transform: scale(1.12) rotate(-4deg);
+  }
+  .spill.is-hit .spill-art {
+    animation: hop 0.45s var(--ease-out-quart);
+  }
+  .spill:focus-visible .spill-ring {
+    stroke: var(--color-red);
+    stroke-width: 4;
+    stroke-dasharray: 8 6;
+  }
+  @keyframes hop {
+    40% {
+      transform: translateY(-18px) scale(1.15) rotate(6deg);
+    }
+  }
+
+  /* record player */
+  .platter {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+  }
+  .is-playing .platter {
+    animation: spin33 1.8s linear infinite;
+  }
+  @keyframes spin33 {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .tonearm {
+    transform-box: view-box;
+    transform-origin: 292px 52px;
+    transform: rotate(-24deg);
+    transition: transform 0.7s var(--ease-out-quart);
+  }
+  .is-playing .tonearm {
+    transform: rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bob,
+  .wiggle:hover > svg,
+  .badge:hover .badge-card,
+  .spill.is-hit .spill-art,
+  .is-playing .platter {
+    animation: none !important;
   }
 }

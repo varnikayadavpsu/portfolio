@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { hero } from "@/content/site";
+import { hero, person } from "@/content/site";
+import type { SfxName } from "@/lib/sound";
+import { withBase } from "@/lib/assets";
 import { EightBallArt, PhoneArt } from "@/components/ink/Art";
 
 /*
@@ -16,9 +18,12 @@ function Hotspot({
   hit,
   label,
   dot,
+  sound,
   children,
 }: {
   id: HotspotKey;
+  /** The object's own sound: on hover with a mouse, on tap/Enter otherwise. */
+  sound: SfxName;
   /** Invisible hit area / focus ring: x, y, w, h. */
   hit: [number, number, number, number];
   /** Label position (centre-bottom). */
@@ -30,8 +35,7 @@ function Hotspot({
   const h = hero.hotspots[id];
   const w = Math.round(h.label.length * 7.3 + 28);
   return (
-    <a href={`#${h.target}`} className="hotspot">
-      <title>{h.label.replace("→", "to")}</title>
+    <a href={`#${h.target}`} className="hotspot" data-sfx={sound} data-sfx-hover={sound}>
       <rect className="hs-ring" x={hit[0]} y={hit[1]} width={hit[2]} height={hit[3]} rx="14" fill="transparent" />
       <g className="obj" aria-hidden="true">
         {children}
@@ -40,8 +44,8 @@ function Hotspot({
         <circle cx={dot[0]} cy={dot[1]} r="5" className="f-red hs-dot" />
         <circle cx={dot[0]} cy={dot[1]} r="5" className="f-red ink-2" />
       </g>
-      <g className="hs-label" aria-hidden="true">
-        <rect x={label[0] - w / 2} y={label[1] - 26} width={w} height="27" rx="13.5" className="f-ink" />
+      <g className="hs-label">
+        <rect x={label[0] - w / 2} y={label[1] - 26} width={w} height="27" rx="13.5" className="f-ink" aria-hidden="true" />
         <text x={label[0]} y={label[1] - 8} textAnchor="middle" className="svg-sans" fontSize="13.5" fontWeight="650" fill="#f5f2eb">
           {h.label}
         </text>
@@ -60,7 +64,8 @@ const candles: [number, number, number, number, boolean][] = [
   [102, 20, 26, 42, true],
 ];
 
-export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
+export function DeskScene() {
+  const photo = withBase(person.photo.src);
   return (
     <svg
       viewBox="0 0 800 640"
@@ -120,7 +125,7 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
       <path d="M120 424 H196 M420 434 H520 M600 416 H648" className="ink-2" opacity="0.35" />
 
       {/* ── sticky note: candlestick chart (PSU Quants) ───────────────── */}
-      <Hotspot id="candles" hit={[58, 52, 156, 146]} label={[136, 222]} dot={[196, 70]}>
+      <Hotspot id="candles" sound="coin" hit={[58, 52, 156, 146]} label={[136, 222]} dot={[196, 70]}>
         <g transform="translate(70 64) rotate(-5)">
           <rect x="0" y="0" width="128" height="118" className="ink-2 f-yellow" />
           <rect x="40" y="-9" width="48" height="18" fill="#f5f2eb" opacity="0.8" transform="rotate(3 64 0)" />
@@ -138,7 +143,7 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
       </Hotspot>
 
       {/* ── trophy + prize ribbon on the shelf ────────────────────────── */}
-      <Hotspot id="trophy" hit={[512, 66, 128, 140]} label={[572, 62]} dot={[594, 86]}>
+      <Hotspot id="trophy" sound="trophy" hit={[512, 66, 128, 140]} label={[572, 62]} dot={[594, 86]}>
         <path d="M532 90 C514 90 514 112 536 114 M588 90 C606 90 606 112 584 114" className="ink f-none" />
         <path d="M532 82 H588 V96 C588 116 576 126 560 126 C544 126 532 116 532 96 Z" className="ink f-yellow" />
         <path d="M578 86 V100 C578 112 572 118 566 121" className="ht-2" />
@@ -155,7 +160,7 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
       </Hotspot>
 
       {/* ── math notebooks ────────────────────────────────────────────── */}
-      <Hotspot id="notebooks" hit={[104, 240, 144, 166]} label={[168, 236]} dot={[198, 256]}>
+      <Hotspot id="notebooks" sound="pages" hit={[104, 240, 144, 166]} label={[168, 236]} dot={[198, 256]}>
         <g transform="rotate(-6 157 344)">
           <rect x="120" y="250" width="74" height="94" rx="4" className="ink f-red" />
           <path d="M129 254 V340" className="ink-2" />
@@ -176,7 +181,7 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
       </Hotspot>
 
       {/* ── laptop running mysh ───────────────────────────────────────── */}
-      <Hotspot id="laptop" hit={[190, 226, 276, 182]} label={[328, 220]} dot={[420, 248]}>
+      <Hotspot id="laptop" sound="keys" hit={[190, 226, 276, 182]} label={[328, 220]} dot={[420, 248]}>
         <rect x="230" y="240" width="196" height="140" rx="9" className="ink f-paper" />
         <rect x="241" y="251" width="174" height="118" rx="4" className="ink-2 f-yellow" />
         <circle cx="328" cy="245.5" r="2" className="f-ink" />
@@ -216,14 +221,14 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
       </text>
 
       {/* ── red rotary phone ──────────────────────────────────────────── */}
-      <Hotspot id="phone" hit={[478, 290, 152, 120]} label={[556, 290]} dot={[612, 316]}>
+      <Hotspot id="phone" sound="ring" hit={[478, 290, 152, 120]} label={[556, 290]} dot={[612, 316]}>
         <g transform="translate(492 314) scale(0.9)">
           <PhoneArt shakeClass="phone-shake" />
         </g>
       </Hotspot>
 
       {/* ── 8-ball + chalk at the front edge ─────────────────────────── */}
-      <Hotspot id="eightball" hit={[270, 400, 90, 56]} label={[306, 494]} dot={[318, 412]}>
+      <Hotspot id="eightball" sound="clack" hit={[270, 400, 90, 56]} label={[306, 494]} dot={[318, 412]}>
         <ellipse cx="300" cy="444" rx="16" ry="3" className="ht-2" />
         <g transform="translate(300 427)">
           <EightBallArt />
@@ -232,23 +237,34 @@ export function DeskScene({ hasIllustration }: { hasIllustration: boolean }) {
         <rect x="333" y="428" width="9" height="5" className="ht-2" />
       </Hotspot>
 
-      {/* ── the character slot (C): Varnika sitting on the desk edge ──── */}
-      {!hasIllustration && (
-        <g aria-hidden="true" opacity="0.85">
-          <g className="ink-2 f-none" strokeDasharray="7 6">
-            <circle cx="712" cy="236" r="30" />
-            <path d="M682 276 C674 300 674 362 680 420 H744 C750 362 750 300 742 276 Q712 264 682 276 Z" />
-            <path d="M684 288 C664 322 662 372 670 420 M740 288 C760 322 762 372 754 420" />
-            <path d="M686 424 L684 556 H706 L708 424 M716 424 L718 556 H740 L742 424" />
-          </g>
-          <text x="712" y="590" textAnchor="middle" className="svg-serif" fontSize="19" fill="#5f5d58">
-            {hero.illustrationNote}
+      {/* ── Varnika's photo as a taped polaroid propped on the desk ─── */}
+      <ellipse cx="708" cy="410" rx="74" ry="6" className="ht-2" opacity="0.7" />
+      <Hotspot id="photo" sound="shutter" hit={[618, 206, 176, 212]} label={[708, 202]} dot={[778, 230]}>
+        <g transform="rotate(4 708 408)">
+          <defs>
+            <clipPath id="polaroid-clip">
+              <rect x="643" y="234" width="130" height="146" />
+            </clipPath>
+          </defs>
+          <rect x="633" y="224" width="150" height="186" rx="3" className="ink f-paper" />
+          <image
+            href={photo}
+            x="643"
+            y="234"
+            width="130"
+            height="146"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#polaroid-clip)"
+          >
+            <title>{person.photo.alt}</title>
+          </image>
+          <rect x="643" y="234" width="130" height="146" className="ink-2 f-none" />
+          <text x="708" y="400" textAnchor="middle" className="svg-serif" fontSize="15" fill="#141414">
+            that’s me ✦
           </text>
-          <text x="712" y="610" textAnchor="middle" className="svg-pixel" fontSize="11" fill="#5f5d58">
-            /public/me.png
-          </text>
+          <rect x="678" y="214" width="60" height="20" className="f-yellow" opacity="0.92" transform="rotate(-6 708 224)" />
         </g>
-      )}
+      </Hotspot>
     </svg>
   );
 }

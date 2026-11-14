@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { nav } from "@/content/site";
 import type { SectionId } from "@/content/types";
 import { InkFace } from "@/components/ink/Art";
+import { SoundToggle } from "./Sound";
 
 const tilts = ["-3deg", "2deg", "-1.5deg", "2.5deg", "-2deg"];
 
 /**
- * Yellow tape-label tabs with an ink face in the middle (C), plus a dark
- * "Resume ↗" pill (B). Shrinks to a compact sticky bar once you scroll.
+ * Yellow tape-label tabs with an ink face in the middle (C), plus a sound
+ * switch on the right. Shrinks to a compact sticky bar once you scroll.
  */
-export function TapeNav({ resumeHref, faceSrc }: { resumeHref: string | null; faceSrc: string | null }) {
+export function TapeNav({ faceSrc }: { faceSrc: string | null }) {
   const [compact, setCompact] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<SectionId | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setCompact(window.scrollY > 40);
@@ -54,6 +54,7 @@ export function TapeNav({ resumeHref, faceSrc }: { resumeHref: string | null; fa
         href={`#${l.target}`}
         className="tape text-[0.95rem] data-[compact=true]:text-[0.85rem]"
         data-compact={compact}
+        data-sfx="tape"
         style={{ ["--r" as string]: tilts[i % tilts.length] }}
         aria-current={active === l.target ? "true" : undefined}
         onClick={() => setOpen(false)}
@@ -85,6 +86,7 @@ export function TapeNav({ resumeHref, faceSrc }: { resumeHref: string | null; fa
               <a
                 href="#top"
                 aria-label={nav.homeLabel}
+                data-sfx="boing"
                 className={`block overflow-hidden rounded-full transition-all duration-300 hover:-rotate-6 ${
                   compact ? "h-11 w-11" : "h-16 w-16"
                 }`}
@@ -106,23 +108,19 @@ export function TapeNav({ resumeHref, faceSrc }: { resumeHref: string | null; fa
           style={{ ["--r" as string]: "-2deg" }}
           aria-expanded={open}
           aria-controls="mobile-menu"
+          data-sfx="tape"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "close ✕" : "menu ✦"}
         </button>
 
-        <a
-          href={resumeHref ?? "#experience"}
-          {...(resumeHref ? { target: "_blank", rel: "noopener" } : {})}
-          className={`pill pill-dark shrink-0 text-[0.9rem] md:absolute md:right-[var(--gutter)] ${compact ? "min-h-10 py-2" : ""}`}
-        >
-          {nav.resumeLabel} <span aria-hidden="true">{resumeHref ? "↗" : "↓"}</span>
-        </a>
+        <div className="md:absolute md:right-[var(--gutter)]">
+          <SoundToggle compact={compact} />
+        </div>
       </div>
 
       <div
         id="mobile-menu"
-        ref={menuRef}
         hidden={!open}
         className="border-b-2 border-ink bg-paper px-[var(--gutter)] pt-3 pb-6 md:hidden"
       >

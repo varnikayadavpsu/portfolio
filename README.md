@@ -30,10 +30,11 @@ Every string, link, project, stat and hackathon stop lives in **`src/content/sit
 
 | File | What it does |
 | --- | --- |
-| `public/me.png` | Your illustration sitting on the desk edge in the hero. Transparent PNG, portrait (about 1 : 2.5). Until it exists, a dashed placeholder shows. |
+| `public/images/varnika-polaroid.jpg` | The photo on the hero desk (a smaller copy of the old site's portrait). Replace it to change the photo. |
 | `public/face.png` | Optional: an ink drawing of your face for the nav button. A doodle is used until then. |
-| `public/resume.pdf` | Turns the "cv" pill and the "Resume ↗" pill into résumé links (they point to Experience until then). |
 | `public/playlist/01.jpg …` | Album covers for the "jam with me" ring; list them in `playground.jam.covers`. Placeholder ink covers show until then. |
+
+There's no résumé link on the site right now, by choice.
 
 Each is checked at build time, so just add the file and rebuild.
 
@@ -45,18 +46,25 @@ Tokens are CSS variables in the `@theme` block of `src/app/globals.css` (`src/st
 - Fonts: Inter Tight (headings, body), Instrument Serif italic (name, small italics), Gloock (splash, counter, outlined numbers), Pixelify Sans (marquees, terminal lines), Caveat (sticky notes only).
 - Halftone shading is three shared SVG dot patterns (`src/components/ink/Defs.tsx`), referenced as `url(#ht-1…3)`.
 
+## Sound
+
+Every sound is synthesised live with the Web Audio API in `src/lib/sound.ts` (no audio files). Give any element `data-sfx="name"` (plays on click/tap) or `data-sfx-hover="name"` (plays on mouse hover) and `<SoundLayer />` handles it. Sounds include the phone ring and pick-up, laptop keys, page flips, trophy ding, billiard clack, cash register, tape rip, sticker peel and slap, gift-box burst, cat meow, horse whinny, speech blips, beeps, boing and the record player's lo-fi loop.
+
+Browsers only allow audio after the visitor's first click, tap or key press, so the phone's ring on scroll is silent until then. The nav has a sound on/off switch (remembered per browser).
+
 ## Motion and accessibility
 
 - The big scroll pieces (journey map, 3D project stack, exploding head) pin only at ≥ 1024 px with motion allowed. Below that, or with `prefers-reduced-motion: reduce`, they become plain stacked layouts, the splash is skipped and every loop stops.
 - The splash shows once per tab session.
+- The phone rings and opens its bubble when it scrolls into view; the gift box bursts the same way. Neither needs a click.
 - Every desk object, sticker and the phone is keyboard reachable; stickers move with the arrow keys.
 
 ## Where each part comes from
 
-- **A (nyree):** typed "hello,|", italic-serif name with `>ω<`, pill buttons, pixel-font `PROJECTS ·˚✧` marquee, "a scene of me surrounded by my things".
+- **A (nyree):** typed "hello,|", italic-serif name with `>ω<`, pill buttons, "a scene of me surrounded by my things".
 - **B (James Chugh):** clickable hotspot labels on the scene, Resume pill, highlighter/underline/circle marks and sticky notes, scroll-driven map route with cards, "the numbers they moved" with big stats, icon timeline, the gift box.
 - **C (deesha):** ink + halftone comic illustration, colour only on clickable objects, yellow tape-label nav with a face, scattered moth/sparkle stickers, curved 3D album ring, sticker wall, the red rotary phone.
-- **D (Huy Phan):** red serif name splash, 3D diagonal project stack with active list and rolling counter, full-screen word transitions (in plum), giant outlined "20 / 28" around a head that pops open.
+- **D (Huy Phan):** red serif name splash, 3D diagonal project stack with active list and rolling counter, full-screen word transitions (in plum, with outlined echoes, tape and stickers), giant outlined "20 / 28" around a head that pops open.
 
 ## Structure
 
@@ -65,13 +73,13 @@ src/
   app/          layout.tsx (fonts, metadata, splash boot script), page.tsx (section order), globals.css
   content/      site.ts (all content) · types.ts (types + todo())
   components/
-    shell/      Splash, TapeNav
+    shell/      Splash, TapeNav, Sound (SoundLayer + on/off switch)
     hero/       Hero, DeskScene (ink desk + hotspots), Drift (cursor stickers)
     journey/    Journey (pinned map), usMap.ts (pre-projected US map + pins)
-    sections/   AboutStory, Work, PlumWipe, Experience, OffTheClock, Playground, Toolbox, Contact
+    sections/   AboutStory, Work, PlumWipe, Experience, OffTheClock, Playground (album ring, record player, stickers), Toolbox, Contact
     ink/        Defs (halftone), Art (phone, 8-ball, face, moth, sparkle), Icons, ProjectArt
-    ui/         Marquee, Roll (odometer), Todo
-  lib/          gsap.ts (ScrollTrigger + media queries), assets.ts, og-images.tsx
+    ui/         Roll (odometer), Todo
+  lib/          gsap.ts (ScrollTrigger + media queries), sound.ts (all sounds), assets.ts, og-images.tsx
 scripts/        todos.mjs, capture-projects.mjs, screenshots.mjs
 ```
 

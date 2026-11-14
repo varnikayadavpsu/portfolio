@@ -1,8 +1,9 @@
-import { featuredProjects, moreBuilds, person, skipLink, transitions } from "@/content/site";
+import { experience, featuredProjects, journey, moreBuilds, offTheClock, person, skipLink, transitions } from "@/content/site";
 import { publicFileExists, withBase } from "@/lib/assets";
 import { InkDefs } from "@/components/ink/Defs";
 import { Splash } from "@/components/shell/Splash";
 import { TapeNav } from "@/components/shell/TapeNav";
+import { SoundLayer } from "@/components/shell/Sound";
 import { Hero } from "@/components/hero/Hero";
 import { AboutStory } from "@/components/sections/AboutStory";
 import { Journey } from "@/components/journey/Journey";
@@ -19,7 +20,6 @@ const ifExists = (p: string) => (publicFileExists(p) ? withBase(p) : null);
 
 export default function Page() {
   const resumeHref = ifExists(person.resumePath);
-  const illustrationSrc = ifExists(person.illustrationPath);
   const faceSrc = ifExists(person.facePath);
 
   const images: Record<string, string> = {};
@@ -28,9 +28,16 @@ export default function Page() {
     if (src) images[p.slug] = src;
   }
 
+  // Corner facts on the plum transitions, counted from the content.
+  const hackathons = journey.stops.filter((s) => s.id !== "home").length;
+  const expMeta = `${experience.roles.length} roles ✦ ${experience.leadership.length} clubs ✦ ${hackathons} hackathons`;
+  const [langs, hobbies] = offTheClock.columns;
+  const otcMeta = `${langs.items.length} languages ✦ ${hobbies.items.length} hobbies ✦ class of 2028`;
+
   return (
     <>
       <InkDefs />
+      <SoundLayer />
       <Splash />
       <a
         href={`#${skipLink.target}`}
@@ -38,16 +45,16 @@ export default function Page() {
       >
         {skipLink.label}
       </a>
-      <TapeNav resumeHref={resumeHref} faceSrc={faceSrc} />
+      <TapeNav faceSrc={faceSrc} />
 
       <main id="main">
-        <Hero resumeHref={resumeHref} illustrationSrc={illustrationSrc} />
+        <Hero />
         <AboutStory />
         <Journey thumbs={images} />
         <Work images={images} />
-        <PlumWipe word={transitions.experience} />
+        <PlumWipe {...transitions.experience} meta={expMeta} />
         <Experience />
-        <PlumWipe word={transitions.offTheClock} />
+        <PlumWipe {...transitions.offTheClock} meta={otcMeta} />
         <OffTheClock />
         <Playground />
         <Toolbox />

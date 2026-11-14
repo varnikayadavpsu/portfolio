@@ -34,11 +34,10 @@ export const person = {
   monogram: "VY",
   email: "varnika2271@gmail.com",
   location: "State College, PA",
-  /** Rendered only if the file exists in /public at build time. */
+  /** Not linked anywhere for now. Drop a PDF here later and add a link if you want one. */
   resumePath: "/resume.pdf",
-  resumeTodo: todo("Add your résumé as public/resume.pdf (the live site doesn't link one)"),
-  /** Your illustration, sitting on the desk edge in the hero. */
-  illustrationPath: "/me.png",
+  /** The photo on the hero desk (same one as the old site's hero). */
+  photo: { src: "/images/varnika-polaroid.jpg", alt: "Varnika Yadav, smiling, on a train platform" },
   /** Optional: an ink drawing of your face for the nav button. A doodle is used until then. */
   facePath: "/face.png",
 };
@@ -62,7 +61,7 @@ export const seo = {
 
 export const splash = { lines: ["VARNIKA", "YADAV"] };
 
-export const nav: { links: { label: string; target: SectionId }[]; homeLabel: string; resumeLabel: string } = {
+export const nav: { links: { label: string; target: SectionId }[]; homeLabel: string } = {
   links: [
     { label: "work", target: "work" },
     { label: "about", target: "about" },
@@ -71,7 +70,6 @@ export const nav: { links: { label: string; target: SectionId }[]; homeLabel: st
     { label: "contact", target: "contact" },
   ],
   homeLabel: "Varnika Yadav, back to top",
-  resumeLabel: "Resume",
 };
 
 export const skipLink = { label: "Skip to work", target: "work" as SectionId };
@@ -85,11 +83,11 @@ export const hero = {
   kaomoji: ">ω<",
   tagline: "Software for messy, real-world problems.",
   bio: "CS + Math @ Penn State ’28. I build full-stack, AI-powered tools for farms, payroll, hospitals and city water systems, and test them until the numbers hold up.",
-  hint: "psst: the coloured things on my desk are clickable",
-  marquee: "PROJECTS",
-  illustrationNote: "your illustration here",
+  hint: "psst: the coloured things on my desk are clickable (and make noise)",
+  scrollCue: "things I’ve shipped",
   /** Labels that pop up on the desk objects, and where each one goes. */
   hotspots: {
+    photo: { label: "that’s me → about", target: "about" as SectionId },
     laptop: { label: "$ ./mysh → work", target: "work" as SectionId },
     notebooks: { label: "∫ math notes → experience", target: "experience" as SectionId },
     trophy: { label: "prizes → journey", target: "journey" as SectionId },
@@ -227,8 +225,8 @@ export const featuredProjects: FeaturedProject[] = [
     stat: { value: "Top 5", caption: "and invited to speak at the AWS AI Summit" },
     stat2: { value: "5 agents", caption: "interviews → feature cards → shipped code" },
     stack: ["Python", "Flask", "AI agents", "Cognee", "Snyk", "Flexprice"],
+    // No public demo exists (the repo only runs on localhost), so it links to the code.
     links: {
-      live: todo("Nod demo link (no live link on the site yet)"),
       code: "https://github.com/AnushaAgarwal27/Nod",
     },
     team: ["Anusha Agarwal", "Vedant Shirvi"],
@@ -451,7 +449,20 @@ export const journey: { kicker: string; heading: string; hint: string; stops: Jo
 
 /* ── 5 · Transitions ────────────────────────────────────────────────────── */
 
-export const transitions = { experience: "EXPERIENCE", offTheClock: "OFF THE CLOCK" };
+export const transitions = {
+  experience: {
+    word: "EXPERIENCE",
+    index: "05",
+    label: "where I’ve worked",
+    tape: "PSU Quants ✦ Penn State ✦ Lavner",
+  },
+  offTheClock: {
+    word: "OFF THE CLOCK",
+    index: "06",
+    label: "what’s in my head",
+    tape: "billiards ✦ cats ✦ horses ✦ memes",
+  },
+};
 
 /* ── 6 · Experience ─────────────────────────────────────────────────────── */
 
@@ -459,12 +470,14 @@ export const experience: {
   kicker: string;
   heading: string;
   roles: Role[];
+  badgeLabel: string;
   leadershipHeading: string;
   leadership: Leadership[];
   education: { degree: string; school: string; expected: string; coursework: string[] };
 } = {
   kicker: "$ cat experience.log",
   heading: "Where I’ve worked.",
+  badgeLabel: "staff",
   roles: [
     {
       role: "Learning Assistant & Grader",
@@ -504,24 +517,28 @@ export const experience: {
       org: "HackPSU",
       dates: "Sept 2025 to now",
       description: "Pre-hackathon workshops with campus clubs; voting and judging at Penn State’s largest hackathon.",
+      emblem: "bulb",
     },
     {
       role: "Exec Team: Event Planner & Secretary",
       org: "Builders Collective",
       dates: "May 2026 to now",
       description: "Helped run c0mpiled-15 ($10K+ in prizes) and get Penn State teams to hackathons in SF and LA.",
+      emblem: "tools",
     },
     {
       role: "Web Manager",
       org: "ERO Billiards Club",
       dates: "Feb 2026 to now",
       description: "Run the club site: schedules, results, tournament sign-ups and weekly recaps.",
+      emblem: "ball",
     },
     {
       role: "Team Lead",
       org: "Women Power Society",
       dates: "2020 to 2023",
       description: "Led a program that taught 100 adults in slum communities to read and write in Hindi.",
+      emblem: "book",
     },
   ],
   education: {
@@ -607,7 +624,8 @@ export const playground: {
     heading: string;
     body: string;
     spotifyLabel: string;
-    playlistUrl: Fillable<string>;
+    spotifyUrl: Fillable<string>;
+    playerNote: string;
     /** Square cover images in /public/playlist, e.g. "/playlist/01.jpg". */
     covers: Fillable<{ src: string; alt: string }[]>;
   };
@@ -617,8 +635,9 @@ export const playground: {
   jam: {
     heading: "jam with me",
     body: "what’s on repeat while I build",
-    spotifyLabel: "spotify",
-    playlistUrl: todo("Your Spotify playlist link"),
+    spotifyLabel: "my spotify",
+    spotifyUrl: "https://open.spotify.com/user/312d56xyscbtgmbqwnvsyriq5tze",
+    playerNote: "drop the needle for a little lo-fi loop, or hear what I actually play →",
     covers: todo("8 to 12 square album covers in public/playlist/ (01.jpg, 02.jpg, …)"),
   },
   stickers: {
@@ -640,12 +659,11 @@ export const playground: {
 
 /* ── 9 · Toolbox ────────────────────────────────────────────────────────── */
 
-export const toolbox: { kicker: string; headingLead: string; headingMark: string; cta: string; reset: string; groups: SkillGroup[] } = {
+export const toolbox: { kicker: string; headingLead: string; headingMark: string; again: string; groups: SkillGroup[] } = {
   kicker: "$ unzip toolbox.zip",
   headingLead: "Everything I know, ",
   headingMark: "unwrapped",
-  cta: "click to unwrap",
-  reset: "wrap it back up",
+  again: "tap the box to burst it again",
   groups: [
     {
       heading: "Frontend",
@@ -683,11 +701,10 @@ export const contact = {
   kicker: "$ ./mysh --call varnika",
   heading: "Let’s build something.",
   line: "Looking for Summer 2027 SWE internships: full-stack, backend, AI/ML, quant-dev.",
-  hint: "pick up the phone",
+  hint: "it’s ringing, I promise",
   ringing: "RING RING",
   bubbleLead: "hi! it’s varnika.",
   copyLabel: "copy",
   copiedLabel: "copied ✓",
-  marquee: "SAY HI",
   copyright: "© 2026 Varnika Yadav",
 };

@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { playground } from "@/content/site";
 import { filled, type Sticker } from "@/content/types";
 import { TodoTag } from "@/components/ui/Todo";
+import { gsap, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
+import { recordPlayer, sfx } from "@/lib/sound";
+import { useSoundOn } from "@/components/shell/Sound";
 
 const COVERS = 12;
-const isDev = process.env.NODE_ENV === "development";
 
 /** Placeholder album art in the ink style until real covers are added. */
 function CoverArt({ i }: { i: number }) {
@@ -130,6 +132,7 @@ function StickerWall() {
     e.currentTarget.setPointerCapture(e.pointerId);
     drag.current = { i, sx: e.clientX, sy: e.clientY, ox: pos[i].x, oy: pos[i].y };
     front(i);
+    sfx.peel();
   };
   const onMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
@@ -139,6 +142,7 @@ function StickerWall() {
     setPos((p) => p.map((v, k) => (k === d.i ? { x, y } : v)));
   };
   const onUp = () => {
+    if (drag.current) sfx.slap();
     drag.current = null;
   };
   const onKey = (i: number) => (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -162,6 +166,7 @@ function StickerWall() {
           <button
             key={s.id}
             type="button"
+            data-sfx="none"
             onPointerDown={onDown(i)}
             onPointerMove={onMove}
             onPointerUp={onUp}
@@ -185,27 +190,173 @@ function StickerWall() {
   );
 }
 
-function Spotify({ url, label }: { url?: string; label: string }) {
-  if (url)
-    return (
-      <a href={url} target="_blank" rel="noopener" className="pill pill-yellow mt-5">
-        {label} <span aria-hidden="true">↗</span>
-        <span className="sr-only"> (opens in a new tab)</span>
-      </a>
-    );
-  // No playlist yet: show the button on localhost only, so the design can be judged.
-  return isDev ? (
-    <span className="pill pill-yellow mt-5">
-      {label} <span aria-hidden="true">↗</span>
-    </span>
-  ) : null;
+/** An ink turntable (C). Click it to drop the needle on an original lo-fi loop. */
+function RecordPlayer() {
+  const [playing, setPlaying] = useState(false);
+  const soundOn = useSoundOn();
+
+  useEffect(() => () => recordPlayer.stop(), []);
+  // Keep the audio in step with the platter: start when playing with sound on
+  // (turning sound off already stops it).
+  useEffect(() => {
+    if (playing && soundOn) recordPlayer.start();
+  }, [playing, soundOn]);
+
+  const toggle = () => {
+    if (playing) recordPlayer.stop();
+    setPlaying(!playing);
+  };
+
+  return (
+    <button
+      type="button"
+      data-sfx="none"
+      aria-pressed={playing}
+      onClick={toggle}
+      className={`group relative w-[min(100%,22rem)] cursor-pointer rounded-3xl ${playing ? "is-playing" : ""}`}
+    >
+      <span className="sr-only">{playing ? "Stop the record" : "Play a little lo-fi loop on the record player"}</span>
+      <svg viewBox="0 0 360 250" className="h-auto w-full overflow-visible" aria-hidden="true">
+        {/* plinth */}
+        <rect x="10" y="44" width="340" height="186" rx="16" className="ink f-paper" />
+        <rect x="10" y="214" width="340" height="16" rx="6" className="ht-2" />
+        <path d="M10 214 H350" className="ink-2" />
+        <rect x="26" y="230" width="22" height="8" rx="2" className="ink-2 f-ink" />
+        <rect x="312" y="230" width="22" height="8" rx="2" className="ink-2 f-ink" />
+        {/* platter + record (spins) */}
+        <circle cx="150" cy="130" r="84" className="ink f-paper" />
+        <g className="platter">
+          <circle cx="150" cy="130" r="78" className="f-ink" />
+          {[70, 62, 54, 46, 38].map((r) => (
+            <circle key={r} cx="150" cy="130" r={r} fill="none" stroke="#f5f2eb" strokeOpacity="0.22" strokeWidth="1" />
+          ))}
+          <circle cx="150" cy="130" r="25" className="f-red" />
+          <text x="150" y="126" textAnchor="middle" className="svg-pixel" fontSize="9" fill="#ffffff">
+            varnika
+          </text>
+          <text x="150" y="140" textAnchor="middle" className="svg-pixel" fontSize="8" fill="#ffffff">
+            33⅓ rpm
+          </text>
+          <path d="M150 52 A78 78 0 0 1 206 75" stroke="#f5f2eb" strokeOpacity="0.5" strokeWidth="3" fill="none" />
+        </g>
+        <circle cx="150" cy="130" r="3.5" className="f-paper" />
+        {/* tonearm */}
+        <g className="tonearm">
+          <path d="M292 52 L300 150 L268 186" className="ink-4 f-none" />
+          <rect x="252" y="180" width="26" height="14" rx="3" transform="rotate(-40 265 187)" className="ink f-yellow" />
+        </g>
+        <circle cx="292" cy="52" r="16" className="ink f-paper" />
+        <circle cx="292" cy="52" r="16" className="ht-2" />
+        <circle cx="292" cy="52" r="5" className="ink-2 f-ink" />
+        {/* controls */}
+        <circle cx="42" cy="194" r="11" className="ink f-yellow" />
+        <text x="62" y="198" className="svg-pixel" fontSize="11" fill="#141414">
+          {playing ? "stop" : "play"}
+        </text>
+        <circle cx="318" cy="196" r="12" className="ink f-paper" />
+        <path d="M318 186 V196" className="ink-2" />
+      </svg>
+    </button>
+  );
 }
 
-/** Playground (C): the curved 3D album ring around "jam with me", and a draggable sticker wall. */
+function Spotify({ url, label }: { url?: string; label: string }) {
+  if (!url) return null;
+  return (
+    <a href={url} target="_blank" rel="noopener" className="pill pill-yellow" data-sfx="pop">
+      {label} <span aria-hidden="true">↗</span>
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
+/** Keeps the album ring turning: a steady spin, faster while you scroll, and draggable. */
+function useRingSpin(stageRef: React.RefObject<HTMLDivElement | null>, spinRef: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const stage = stageRef.current;
+    const spin = spinRef.current;
+    if (!stage || !spin) return;
+    let angle = 0;
+    let boost = 0; // extra degrees/second from scrolling or flinging
+    let dragging = false;
+    let lastX = 0;
+    let lastT = 0;
+    let vel = 0;
+    const base = prefersReducedMotion() ? 0 : 14; // degrees/second
+    const render = () => {
+      spin.style.transform = `rotateY(${angle}deg)`;
+    };
+    render();
+
+    let visible = false;
+    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting), { rootMargin: "100px" });
+    io.observe(stage);
+
+    const st = ScrollTrigger.create({
+      trigger: stage,
+      start: "top bottom",
+      end: "bottom top",
+      onUpdate: (self) => {
+        if (base) boost = Math.max(boost, Math.min(220, Math.abs(self.getVelocity()) / 12));
+      },
+    });
+
+    const tick = (_time: number, dt: number) => {
+      if (!visible || dragging) return;
+      const s = dt / 1000;
+      angle -= (base + boost) * s;
+      boost *= Math.pow(0.12, s); // eases back to the base speed
+      render();
+    };
+    gsap.ticker.add(tick);
+
+    // drag to spin
+    const down = (e: PointerEvent) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastT = performance.now();
+      vel = 0;
+      stage.setPointerCapture(e.pointerId);
+    };
+    const move = (e: PointerEvent) => {
+      if (!dragging) return;
+      const now = performance.now();
+      const dx = e.clientX - lastX;
+      angle += dx * 0.35;
+      vel = (dx * 0.35) / Math.max(1, now - lastT) * 1000;
+      lastX = e.clientX;
+      lastT = now;
+      render();
+    };
+    const up = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (Math.abs(vel) > 120) sfx.whoosh();
+      boost = base ? Math.min(400, Math.abs(vel)) : 0;
+    };
+    stage.addEventListener("pointerdown", down);
+    stage.addEventListener("pointermove", move);
+    stage.addEventListener("pointerup", up);
+    stage.addEventListener("pointercancel", up);
+    return () => {
+      gsap.ticker.remove(tick);
+      st.kill();
+      io.disconnect();
+      stage.removeEventListener("pointerdown", down);
+      stage.removeEventListener("pointermove", move);
+      stage.removeEventListener("pointerup", up);
+      stage.removeEventListener("pointercancel", up);
+    };
+  }, [stageRef, spinRef]);
+}
+
+/** Playground (C): the curved 3D album ring around "jam with me", a record player, and a draggable sticker wall. */
 export function Playground() {
   const { jam, stickers } = playground;
-  const url = filled(jam.playlistUrl);
   const covers = filled(jam.covers);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const spinRef = useRef<HTMLDivElement>(null);
+  useRingSpin(stageRef, spinRef);
 
   return (
     <section id="playground" aria-labelledby="pg-h" className="py-24 md:py-32">
@@ -217,9 +368,12 @@ export function Playground() {
       </div>
 
       {/* jam with me */}
-      <div className="alb-stage relative mx-auto mt-4 h-[23rem] max-w-[1440px] overflow-hidden [--R:190px] [--cw:76px] [--ty:-34px] md:h-[42rem] md:[--R:440px] md:[--cw:132px] md:[--ty:0px]">
+      <div
+        ref={stageRef}
+        className="alb-stage relative mx-auto mt-4 h-[23rem] max-w-[1440px] cursor-grab touch-pan-y overflow-hidden select-none active:cursor-grabbing [--R:190px] [--cw:76px] [--ty:-34px] md:h-[42rem] md:[--R:440px] md:[--cw:132px] md:[--ty:0px]"
+      >
         <div className="alb-ring" style={{ transform: "rotateX(-27deg) rotateZ(-4deg)" }}>
-          <div className="alb-spin">
+          <div ref={spinRef} className="alb-spin">
             {Array.from({ length: COVERS }, (_, i) => (
               <div
                 key={i}
@@ -234,7 +388,7 @@ export function Playground() {
               >
                 {covers?.[i] ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={covers[i].src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  <img src={covers[i].src} alt="" className="h-full w-full object-cover" loading="lazy" draggable={false} />
                 ) : (
                   <CoverArt i={i} />
                 )}
@@ -242,7 +396,7 @@ export function Playground() {
             ))}
           </div>
           <div
-            className="absolute top-0 left-0 grid w-[min(20rem,80vw)] place-items-center text-center md:w-[40rem]"
+            className="pointer-events-none absolute top-0 left-0 grid w-[min(20rem,80vw)] place-items-center text-center md:w-[40rem]"
             style={{ transform: "translate(-50%, calc(-50% + var(--ty))) translateZ(calc(var(--R) * 0.45)) rotateZ(4deg) rotateX(27deg)" }}
           >
             <h3 className="font-serif text-[clamp(3rem,7vw,6.25rem)] leading-[0.9] italic">{jam.heading}</h3>
@@ -250,11 +404,16 @@ export function Playground() {
           </div>
         </div>
       </div>
-      <div className="relative z-10 flex flex-col items-center md:-mt-4">
-        <p className="text-muted md:hidden">{jam.body}</p>
-        <Spotify url={url} label={jam.spotifyLabel} />
-        {!url && <TodoTag value={jam.playlistUrl} className="mt-3" />}
-        {!covers && <TodoTag value={jam.covers} className="mt-2" />}
+
+      {/* record player + spotify */}
+      <div className="wrap relative z-10 flex flex-col items-center gap-6 md:-mt-6 md:flex-row md:justify-center md:gap-12">
+        <RecordPlayer />
+        <div className="flex max-w-[18rem] flex-col items-center gap-3 text-center md:items-start md:text-left">
+          <p className="text-muted md:hidden">{jam.body}</p>
+          <p className="font-serif text-xl leading-snug italic">{jam.playerNote}</p>
+          <Spotify url={filled(jam.spotifyUrl)} label={jam.spotifyLabel} />
+          {!covers && <TodoTag value={jam.covers} />}
+        </div>
       </div>
 
       {/* sticker wall */}
