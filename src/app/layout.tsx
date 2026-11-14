@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Big_Shoulders, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Caveat, Gloock, Instrument_Serif, Inter_Tight, Pixelify_Sans } from "next/font/google";
 import { filled } from "@/content/types";
 import { person, seo, siteUrl } from "@/content/site";
 import { colors } from "@/styles/tokens";
@@ -7,43 +7,24 @@ import { withBase } from "@/lib/assets";
 import { OG_SIZE } from "@/lib/og-images";
 import "./globals.css";
 
-/*
- * Google merged "Big Shoulders Display" into the single "Big Shoulders" family,
- * with an optical-size (opsz) axis. Loading that axis and setting opsz 72 in CSS
- * (see `t-display`) gives the Display cut.
- */
-const display = Big_Shoulders({
+/* The five fonts of the design system. No others. */
+const sans = Inter_Tight({ subsets: ["latin"], variable: "--font-inter-tight", display: "swap" });
+const serif = Instrument_Serif({
   subsets: ["latin"],
-  axes: ["opsz"],
-  variable: "--font-big-shoulders",
-  display: "swap",
-  // Next has no metric overrides for this family yet; headline lines never
-  // wrap, so a plain condensed fallback causes no layout shift.
-  adjustFontFallback: false,
-  fallback: ["Arial Narrow", "Roboto Condensed", "sans-serif"],
-});
-
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["500"],
-  variable: "--font-jetbrains-mono",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
   display: "swap",
 });
-
-const sans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
+const splash = Gloock({ subsets: ["latin"], weight: "400", variable: "--font-gloock", display: "swap" });
+const pixel = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixelify", display: "swap" });
+const hand = Caveat({ subsets: ["latin"], variable: "--font-caveat", display: "swap", preload: false });
 
 function resolveSiteUrl(): URL | undefined {
-  const fromContent = filled(siteUrl);
-  const fromEnv =
+  const value =
+    filled(siteUrl) ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : undefined);
-  const value = fromContent || fromEnv;
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined);
   try {
     return value ? new URL(value) : undefined;
   } catch {
@@ -78,14 +59,27 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: colors.plum,
+  themeColor: colors.paper,
   width: "device-width",
   initialScale: 1,
 };
 
+/*
+ * Runs before first paint: swaps no-js → js, and turns the splash off for
+ * repeat visits in this tab session (or when reduced motion is on).
+ */
+const bootScript = `(function(){var d=document.documentElement;d.classList.remove('no-js');d.classList.add('js');try{var r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(r||sessionStorage.getItem('vy-splash')){d.setAttribute('data-splash','off')}else{sessionStorage.setItem('vy-splash','1')}}catch(e){d.setAttribute('data-splash','off')}})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${mono.variable} ${sans.variable}`}>
+    <html
+      lang="en"
+      className={`no-js ${sans.variable} ${serif.variable} ${splash.variable} ${pixel.variable} ${hand.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

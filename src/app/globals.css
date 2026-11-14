@@ -1,644 +1,850 @@
 @import "tailwindcss";
-@import "lenis/dist/lenis.css";
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Layout modes
-   • hz       desktop horizontal scroll (≥ 900px and motion allowed)
-   • stacked  vertical layout (< 900px, or prefers-reduced-motion: reduce)
-   Mobile-first: unprefixed styles are the stacked layout; `hz:` overrides.
-   `wide:` is a plain ≥ 900px breakpoint (used by the stacked layout on
-   wide reduced-motion screens). It is declared before `hz` so `hz` wins.
+   Varnika Yadav · redesign 2026
+   Paper + ink comic line art. Colour only appears on things you can click.
+   Tailwind v4 keeps its config here. Tokens are the only place hex values live
+   (src/styles/tokens.ts mirrors them for the generated OG image + favicon).
    ───────────────────────────────────────────────────────────────────────── */
-@custom-variant wide (@media (min-width: 900px));
-@custom-variant hz (@media (min-width: 900px) and (prefers-reduced-motion: no-preference));
-@custom-variant stacked {
-  @media (max-width: 899.98px), (prefers-reduced-motion: reduce) {
-    @slot;
-  }
-}
-@custom-variant can-hover (@media (hover: hover));
 
-/* ── Design tokens (the only place hex values live) ─────────────────────── */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+/* Big scroll set pieces (pins, 3D) only run here; everything else gets the simple layout. */
+@custom-variant motion-lg (@media (min-width: 1024px) and (prefers-reduced-motion: no-preference));
+
 @theme {
-  /* Pinterest Palette 2026 */
-  --color-plum: #351e28; /* Plum Noir */
-  --color-wasabi: #e9f056; /* Wasabi */
-  --color-ice: #d7efff; /* Cool Blue */
-  --color-jade: #aeb8a0; /* Jade */
-  --color-persimmon: #ff5c34; /* Persimmon — accent only, < 5% of the screen */
-
-  --spacing-rail: 64px;
-  --spacing-topbar: 56px;
-  --spacing-frame: 24px;
-  --radius-notch: 28px;
+  --color-*: initial;
+  --color-paper: #f5f2eb;
+  --color-paper-2: #ece8de; /* a shade of paper for wells and pills */
+  --color-ink: #141414;
+  --color-red: #e3262f; /* accent (D): splash, counter, spot-colour objects */
+  --color-yellow: #f6e05e; /* highlighter (B + C): tape, highlights, sticky notes */
+  --color-lavender: #8e8db8; /* (A) the cv pill */
+  /* #8E8DB8 is 2.8:1 on paper; this hair-darker cut passes 3:1 for the big name. */
+  --color-lavender-ink: #8584b1;
+  --color-plum: #351e28; /* brand: full-screen transition panels */
+  --color-route: #2f5bd3; /* journey route line (B) */
+  --color-pink: #f8cdca; /* pink sticky note, a tint of the red */
+  --color-fade: #86847e; /* text below the reading point; 3.2:1, large text only */
+  --color-muted: #5f5d58; /* small secondary text; 5.7:1 */
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
-  --font-display: var(--font-big-shoulders), "Arial Narrow", "Roboto Condensed", sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-splash: var(--font-gloock), Georgia, serif;
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+  --font-hand: var(--font-caveat), "Comic Sans MS", cursive;
 }
 
 :root {
-  --rail-w: var(--spacing-rail);
-  --topbar-h: var(--spacing-topbar);
-  --frame-inset: var(--spacing-frame);
-  --frame-radius: var(--radius-notch);
-  --frame-stroke: 1.5px;
-  --frame-label-pad: 16px;
-  --illo-stroke-w: 1.75px;
-  --ticket-notch: 14px;
+  --nav-h: 76px;
+  --gutter: 16px;
+  --intro-delay: 1.75s; /* hero starts typing once the splash has gone */
   color-scheme: light;
+}
+@media (min-width: 768px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+html[data-splash="off"] {
+  --intro-delay: 0.15s;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --intro-delay: 0s;
+  }
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
 @layer base {
   html {
-    background: var(--color-plum);
+    background: var(--color-paper);
     -webkit-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
+    scroll-padding-top: 64px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
   body {
     font-family: var(--font-sans);
     font-size: 1.0625rem;
-    line-height: 1.55;
-    color: var(--color-plum);
-    background: var(--color-ice);
+    line-height: 1.5;
+    color: var(--color-ink);
+    background: var(--color-paper);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
   :focus-visible {
-    outline: 2px solid var(--focus, currentColor);
-    outline-offset: 2px;
+    outline: 3px solid var(--color-red);
+    outline-offset: 3px;
+    border-radius: 4px;
   }
   ::selection {
-    background: var(--color-wasabi);
-    color: var(--color-plum);
+    background: var(--color-yellow);
+    color: var(--color-ink);
   }
-  [id] {
-    scroll-margin-top: var(--topbar-h);
+  img,
+  svg {
+    max-width: none;
   }
 }
 
-/* ── Utilities ──────────────────────────────────────────────────────────── */
-/* Type: Big Shoulders' optical-size axis at 72 = the "Display" cut. */
-@utility t-display {
-  font-family: var(--font-display);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 0.88;
-  font-variation-settings: "opsz" 72;
+/* ── Type & small utilities ─────────────────────────────────────────────── */
+@utility wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
-
-@utility t-hero {
-  font-size: clamp(4rem, 9vw, 9.5rem);
-}
-
-@utility t-panel {
-  font-size: clamp(2.25rem, 4vw, 3.75rem);
-}
-
-@utility t-mono {
-  font-family: var(--font-mono);
+@utility t-pixel {
+  font-family: var(--font-pixel);
   font-weight: 500;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
+}
+@utility t-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+@utility t-hand {
+  font-family: var(--font-hand);
+  font-weight: 600;
+}
+@utility t-h2 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  font-size: clamp(2.5rem, 6.4vw, 5.75rem);
+}
+@utility kicker {
+  font-family: var(--font-pixel);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
 }
 
-/* Hero: the name fills the panel width; the tagline sits under it in size. */
-@utility hero-name {
-  font-size: clamp(4.5rem, 25vw, 11rem);
-  line-height: 0.82;
-  @variant hz {
-    font-size: 15.6cqw;
-  }
-}
-@utility hero-tagline {
-  font-size: clamp(2.4rem, 11vw, 3.75rem);
-  @variant hz {
-    font-size: clamp(2.75rem, min(4.6vw, 7.4vh), 5.25rem);
-  }
-}
-@utility t-body {
-  font-size: 1.0625rem;
-  line-height: 1.55;
-  max-width: 60ch;
+/* Hand-drawn yellow marker behind a phrase (headings, toolbox, work). */
+@utility hl {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 9 C40 4 120 12 197 6 L196 35 C130 38 60 31 4 36 Z' fill='%23F6E05E'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 100% 78%;
+  background-position: 0 62%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.03em;
 }
 
-@utility btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.875rem;
-  background-color: var(--btn-bg);
-  color: var(--btn-fg);
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.85rem;
-  line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.95rem 1.25rem;
-  border-radius: 0;
-  text-decoration: none;
-  cursor: pointer;
-  &:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 2px;
-  }
+/* ── Halftone + ink helpers for inline SVG ──────────────────────────────── */
+.ink {
+  stroke: var(--color-ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.ink-2 {
+  stroke: var(--color-ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.ink-4 {
+  stroke: var(--color-ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.f-ink {
+  fill: var(--color-ink);
+}
+.f-paper {
+  fill: var(--color-paper);
+}
+.f-red {
+  fill: var(--color-red);
+}
+.f-yellow {
+  fill: var(--color-yellow);
+}
+.f-none {
+  fill: none;
+}
+.ht-1 {
+  fill: url(#ht-1);
+}
+.ht-2 {
+  fill: url(#ht-2);
+}
+.ht-3 {
+  fill: url(#ht-3);
+}
+.svg-pixel {
+  font-family: var(--font-pixel);
+}
+.svg-hand {
+  font-family: var(--font-hand);
+  font-weight: 700;
+}
+.svg-sans {
+  font-family: var(--font-sans);
+}
+.svg-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
 }
 
-@utility hard-shadow {
-  box-shadow: 6px 6px 0 var(--shadow, var(--accent));
-  transition:
-    transform 0.25s var(--ease-out-quart),
-    box-shadow 0.25s var(--ease-out-quart);
-  @media (hover: hover) {
-    &:hover {
-      transform: translate(-4px, -4px);
-      box-shadow: 10px 10px 0 var(--shadow, var(--accent));
-    }
-  }
-  &:focus-within {
-    transform: translate(-4px, -4px);
-    box-shadow: 10px 10px 0 var(--shadow, var(--accent));
+/* ── Splash (D) ─────────────────────────────────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--color-white);
+  animation: splash-out 0.85s var(--ease-in-out-quart) 1.2s forwards;
+  pointer-events: none;
+}
+.splash-line {
+  display: block;
+  overflow: hidden;
+  font-family: var(--font-splash);
+  color: var(--color-red);
+  font-size: clamp(4.25rem, 17.5vw, 17rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+.splash-line > span {
+  display: block;
+  animation: splash-rise 0.7s var(--ease-out-quart) both;
+}
+.splash-line:nth-child(2) {
+  text-align: right;
+  margin-left: 0.6em;
+}
+.splash-line:nth-child(2) > span {
+  animation-delay: 0.08s;
+}
+html[data-splash="off"] .splash {
+  display: none;
+}
+/* Scale in rather than slide up from a mask: the full name is on the first paint. */
+@keyframes splash-rise {
+  from {
+    transform: scale(0.94);
   }
 }
-
-@utility concave {
-  --r: var(--concave-r, var(--frame-radius));
-  --concave: radial-gradient(circle at 0 0, #0000 var(--r), #000 calc(var(--r) + 0.5px)),
-    radial-gradient(circle at 100% 0, #0000 var(--r), #000 calc(var(--r) + 0.5px)),
-    radial-gradient(circle at 0 100%, #0000 var(--r), #000 calc(var(--r) + 0.5px)),
-    radial-gradient(circle at 100% 100%, #0000 var(--r), #000 calc(var(--r) + 0.5px));
-  -webkit-mask-image: var(--concave);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--concave);
-  mask-composite: intersect;
+@keyframes splash-out {
+  to {
+    transform: translateY(-100%);
+    visibility: hidden;
+  }
 }
 
 @layer components {
-  /* ── Panel color themes ─────────────────────────────────────────────────── */
-  .theme-ice,
-  .theme-wasabi,
-  .theme-jade,
-  .theme-plum {
-    background-color: var(--panel-bg);
-    color: var(--panel-fg);
-  }
-  .theme-ice {
-    --panel-bg: var(--color-ice);
-    --panel-fg: var(--color-plum);
-    --accent: var(--color-plum);
-    --illo-fill: var(--color-wasabi);
-    --btn-bg: var(--color-plum);
-    --btn-fg: var(--color-wasabi);
-    --focus: var(--color-plum);
-  }
-  .theme-wasabi {
-    --panel-bg: var(--color-wasabi);
-    --panel-fg: var(--color-plum);
-    --accent: var(--color-plum);
-    /* wasabi on wasabi would vanish, so illustrations here use ice as their one fill */
-    --illo-fill: var(--color-ice);
-    --btn-bg: var(--color-plum);
-    --btn-fg: var(--color-wasabi);
-    --focus: var(--color-plum);
-  }
-  .theme-jade {
-    --panel-bg: var(--color-jade);
-    --panel-fg: var(--color-plum);
-    --accent: var(--color-plum);
-    --illo-fill: var(--color-wasabi);
-    --btn-bg: var(--color-plum);
-    --btn-fg: var(--color-wasabi);
-    --focus: var(--color-plum);
-  }
-  .theme-plum {
-    --panel-bg: var(--color-plum);
-    --panel-fg: var(--color-ice);
-    --accent: var(--color-wasabi);
-    --illo-fill: var(--color-persimmon);
-    --btn-bg: var(--color-wasabi);
-    --btn-fg: var(--color-plum);
-    --focus: var(--color-wasabi);
-  }
-
-  /* ── Buttons ────────────────────────────────────────────────────────────── */
-  .btn-arrow {
-    display: inline-block;
-    transition: transform 0.25s var(--ease-out-quart);
-  }
-  .btn:focus-visible .btn-arrow,
-  .cta-bar:focus-visible .btn-arrow {
-    transform: translateX(4px);
-  }
-  @media (hover: hover) {
-    .btn:hover .btn-arrow,
-    .cta-bar:hover .btn-arrow {
-      transform: translateX(4px);
-    }
-  }
-
-  /* ── Frame ──────────────────────────────────────────────────────────────── */
-  .frame-svg {
-    opacity: 0;
-    transition: opacity 0.3s ease-out;
-  }
-  .frame-svg[data-ready] {
-    opacity: 1;
-  }
-  .frame-svg path {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: var(--frame-stroke);
-  }
-
-  /* ── Ticket cards ───────────────────────────────────────────────────────── */
-  .ticket {
-    container-type: inline-size;
-    --shadow: var(--color-wasabi);
-    filter: drop-shadow(6px 6px 0 var(--shadow));
-    transition:
-      transform 0.25s var(--ease-out-quart),
-      filter 0.25s var(--ease-out-quart);
-  }
-  @media (hover: hover) {
-    .ticket:hover {
-      transform: translate(-4px, -4px);
-      filter: drop-shadow(10px 10px 0 var(--shadow));
-    }
-  }
-  .ticket:focus-within {
-    transform: translate(-4px, -4px);
-    filter: drop-shadow(10px 10px 0 var(--shadow));
-  }
-  .ticket-inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  .ticket-piece {
-    --concave-r: var(--ticket-notch);
-    --r: var(--ticket-notch);
+  /* ── Tape labels (C) ────────────────────────────────────────────────────── */
+  .tape {
+    --r: -2deg;
     position: relative;
-    background: var(--color-ice);
-    color: var(--color-plum);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.5em 0.95em 0.45em;
+    background-color: var(--color-yellow);
+    background-image:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.16) 0 2px, transparent 2px 6px),
+      linear-gradient(180deg, rgb(255 255 255 / 0.28), transparent 40%, rgb(20 20 20 / 0.05));
+    color: var(--color-ink);
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+    transform: rotate(var(--r));
+    clip-path: polygon(
+      5px 0,
+      calc(100% - 5px) 0,
+      100% 22%,
+      calc(100% - 4px) 46%,
+      100% 70%,
+      calc(100% - 5px) 100%,
+      5px 100%,
+      0 76%,
+      4px 52%,
+      0 28%
+    );
+    transition:
+      transform 0.25s var(--ease-back),
+      background-color 0.2s;
   }
-  .ticket-stub::before {
-    content: "";
-    position: absolute;
-    left: calc(var(--r) + 4px);
-    right: calc(var(--r) + 4px);
-    top: 0;
-    border-top: 2px dashed var(--color-plum);
+  a.tape:hover,
+  button.tape:hover {
+    transform: rotate(0deg) translateY(-2px);
   }
-  @container (min-width: 540px) {
-    .ticket-inner {
-      flex-direction: row;
-    }
-    .ticket-stub {
-      width: 9.5rem;
-      flex: none;
-    }
-    .ticket-stub::before {
-      left: 0;
-      right: auto;
-      top: calc(var(--r) + 4px);
-      bottom: calc(var(--r) + 4px);
-      border-top: 0;
-      border-left: 2px dashed var(--color-plum);
-    }
-    .ticket-stub-body {
-      flex-direction: column;
-      align-items: flex-start;
+
+  /* ── Pills (A) ──────────────────────────────────────────────────────────── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    min-height: 44px;
+    padding: 0.55em 1.15em;
+    border-radius: 999px;
+    font-weight: 650;
+    line-height: 1;
+    transition:
+      transform 0.2s var(--ease-back),
+      background-color 0.2s;
+  }
+  .pill:hover {
+    transform: translateY(-2px);
+  }
+  .pill-cv {
+    background: var(--color-lavender);
+    color: var(--color-ink);
+  }
+  .pill-grey {
+    background: var(--color-paper-2);
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 1.5px rgb(20 20 20 / 0.12);
+  }
+  .pill-dark {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .pill-yellow {
+    background: var(--color-yellow);
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 2px var(--color-ink);
+  }
+
+  /* ── Pixel marquee (A) ──────────────────────────────────────────────────── */
+  .marquee {
+    display: flex;
+    overflow: hidden;
+    border-block: 2px solid var(--color-ink);
+    user-select: none;
+  }
+  .marquee-track {
+    display: flex;
+    flex: none;
+    animation: marquee 28s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  .marquee-item {
+    flex: none;
+    padding: 0.5rem 0.9rem;
+    font-family: var(--font-pixel);
+    font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-100%);
     }
   }
 
-  /* ── Illustrations ──────────────────────────────────────────────────────── */
-  .illo {
-    overflow: visible;
-    display: block;
-  }
-  .illo .s {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: calc(var(--illo-stroke-w) / var(--illo-scale, 1));
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .illo .s-dash {
-    stroke-dasharray: calc(4px / var(--illo-scale, 1)) calc(7px / var(--illo-scale, 1));
-  }
-  .illo .f {
-    fill: var(--illo-fill);
-  }
-  .illo .bg {
-    fill: var(--panel-bg);
-  }
-  .illo .p {
-    fill: var(--color-persimmon);
-  }
-  .illo .ink {
-    fill: currentColor;
-  }
-  .illo text {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    fill: currentColor;
-  }
-
-  @keyframes flow {
-  to {
-    stroke-dashoffset: -22.1;
-  }
-}
-@keyframes orbit-flow {
-  to {
-    stroke-dashoffset: calc(-22px / var(--illo-scale, 1));
-  }
-}
-@keyframes beam-flow {
-  to {
-    stroke-dashoffset: calc(-16px / var(--illo-scale, 1));
-  }
-}
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.5);
-    opacity: 0.55;
-  }
-  100% {
-    transform: scale(2.1);
-    opacity: 0;
-  }
-}
-@keyframes drip {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: translateY(34px);
-    opacity: 0;
-  }
-}
-
-/* Page-load intro (CSS so it starts with the first paint, before any JS). */
-@keyframes intro-rise {
-  from {
-    transform: translateY(var(--rise-from, 108%));
-  }
-}
-@keyframes intro-fade {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
-@keyframes intro-slide {
-  from {
-    opacity: 0;
-    transform: translateX(56px);
-  }
-}
-@keyframes intro-wipe {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes intro-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.4) rotate(-120deg);
-  }
-}
-@keyframes nudge {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(6px);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .intro-rise {
-    animation: intro-rise 1s var(--ease-out-quart) backwards;
-    animation-delay: calc(var(--i, 0) * 90ms + 120ms);
-  }
-  /* Phones: a short unmasked slide, so the whole headline paints on the first frame. */
-  @media (max-width: 899.98px) {
-    .intro-mask {
-      overflow: visible;
-    }
-    .intro-rise {
-      --rise-from: 28%;
-      animation-duration: 0.8s;
-      animation-delay: calc(var(--i, 0) * 60ms);
-    }
-  }
-  .intro-fade {
-    animation: intro-fade 0.8s var(--ease-out-quart) backwards;
-    animation-delay: var(--d, 0ms);
-  }
-  .intro-slide {
-    animation: intro-slide 0.9s var(--ease-out-quart) backwards;
-    animation-delay: var(--d, 500ms);
-  }
-  .intro-wipe {
-    animation: intro-wipe 1.1s var(--ease-out-quart) backwards;
-    animation-delay: var(--d, 150ms);
-  }
-  .nudge {
+  /* ── Hero typing (A) ────────────────────────────────────────────────────── */
+  /* Letters take no space until typed, so the caret follows them. */
+  .type-ch {
     display: inline-block;
-    animation: nudge 1.6s ease-in-out infinite;
+    vertical-align: top;
+    max-width: 0;
+    overflow: hidden;
+    animation: type-in 0.01s step-end forwards;
+    animation-delay: calc(var(--intro-delay) + var(--i) * 110ms);
   }
-  .intro-pop {
-    animation: intro-pop 0.8s var(--ease-out-quart) backwards;
-    animation-delay: var(--d, 1000ms);
-  }
-  .spin-badge-ring {
-    transform-origin: 70px 70px;
-    animation: spin 16s linear infinite;
-  }
-}
-
-/* Photos zoom a touch on hover; the sticker swells. */
-.photo-zoom img {
-  transition: scale 0.7s var(--ease-out-quart);
-}
-.spin-badge {
-  transition: scale 0.3s var(--ease-out-quart);
-}
-@media (hover: hover) {
-  .photo-zoom:hover img {
-    scale: 1.05;
-  }
-  .spin-badge:hover {
-    scale: 1.08;
-  }
-}
-
-@keyframes cursor-blink {
-    0%,
-    49.99% {
-      opacity: 1;
+  @keyframes type-in {
+    to {
+      max-width: 1.5em;
     }
-    50%,
-    100% {
+  }
+  .caret {
+    display: inline-block;
+    vertical-align: top;
+    width: 0.08em;
+    height: 0.78em;
+    margin-left: 0.05em;
+    margin-top: 0.1em;
+    background: var(--color-ink);
+    animation: blink 1.05s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
       opacity: 0;
     }
   }
-  .cursor-blink {
-    animation: cursor-blink 1s steps(1, end) infinite;
+  .hero-rise {
+    animation: rise 0.8s var(--ease-out-quart) both;
+    animation-delay: calc(var(--intro-delay) + var(--d, 0s));
+  }
+  /* A mask wipe, not a fade: text is never semi-transparent (keeps contrast checks true mid-animation). */
+  @keyframes rise {
+    from {
+      clip-path: inset(100% 0 0 0);
+      transform: translateY(18px);
+    }
   }
 
-  /* ── Ambient illustration loops (run only while on screen: [data-live]) ── */
-  .illo .p-stroke {
-    fill: none;
-    stroke: var(--color-persimmon);
-    stroke-width: calc(1.75px / var(--illo-scale, 1));
-    stroke-linecap: round;
-    stroke-dasharray: calc(3px / var(--illo-scale, 1)) calc(5px / var(--illo-scale, 1));
+  /* ── Desk scene hotspots (B + C) ────────────────────────────────────────── */
+  .hotspot {
+    cursor: pointer;
+    outline: none;
   }
-  .illo .flow {
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-width: calc(3.4px / var(--illo-scale, 1));
-    stroke-dasharray: 0.1 22;
-    opacity: 0.7;
-    animation: flow 1.1s linear infinite;
+  .hotspot .obj {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: transform 0.35s var(--ease-back);
   }
-  .illo .flow-slow {
-    animation-duration: 1.8s;
+  .hotspot:hover .obj,
+  .hotspot:focus-visible .obj {
+    transform: translateY(-5px) rotate(-1.5deg);
   }
-  .illo .amb-orbit {
-    stroke-dasharray: calc(4px / var(--illo-scale, 1)) calc(7px / var(--illo-scale, 1));
-    animation: orbit-flow 1.4s linear infinite;
+  .hotspot .hs-label {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transform: scale(0.85) translateY(6px);
+    transition:
+      opacity 0.2s,
+      transform 0.3s var(--ease-back);
+    pointer-events: none;
   }
-  .illo .amb-beam {
-    animation: beam-flow 0.6s linear infinite;
+  .hotspot:hover .hs-label,
+  .hotspot:focus-visible .hs-label {
+    opacity: 1;
+    transform: none;
   }
-  .illo .amb-pulse {
+  .hotspot:focus-visible .hs-ring {
+    stroke: var(--color-red);
+    stroke-width: 3;
+    stroke-dasharray: 6 5;
+  }
+  .hs-dot {
     transform-box: fill-box;
     transform-origin: center;
-    animation: pulse-ring 1.8s var(--ease-out-quart) infinite;
+    opacity: 0;
   }
-  .illo .amb-drip {
-    animation: drip 1.35s cubic-bezier(0.55, 0, 0.9, 0.4) infinite;
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .hs-dot {
+      animation: hs-pulse 2.2s var(--ease-out-quart) infinite;
+    }
   }
-  .illo .amb-blink {
-    animation: cursor-blink 1.2s steps(1, end) infinite;
+  @keyframes hs-pulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.9;
+    }
+    80%,
+    100% {
+      transform: scale(2.1);
+      opacity: 0;
+    }
   }
-  .illo:not([data-live]) .amb {
+  @media (hover: none) and (min-width: 768px) {
+    .hotspot .hs-label {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .phone-shake {
+    transform-box: fill-box;
+    transform-origin: 50% 90%;
+  }
+  .hotspot:hover .phone-shake {
+    animation: shake 0.5s linear 2;
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    20% {
+      transform: rotate(-4deg);
+    }
+    40% {
+      transform: rotate(4deg);
+    }
+    60% {
+      transform: rotate(-3deg);
+    }
+    80% {
+      transform: rotate(3deg);
+    }
+  }
+  .screen-caret {
+    animation: blink 1.05s steps(1) infinite;
+  }
+
+  /* ── About story (B) ────────────────────────────────────────────────────── */
+  .story-word {
+    color: var(--color-fade);
+  }
+  .no-js .story-word,
+  .story-done .story-word {
+    color: var(--color-ink);
+  }
+  .mark {
+    position: relative;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background-repeat: no-repeat;
+  }
+  .mark--highlight {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 9 C40 4 120 12 197 6 L196 35 C130 38 60 31 4 36 Z' fill='%23F6E05E'/%3E%3C/svg%3E");
+    background-size: 0% 82%;
+    background-position: 0 58%;
+    transition: background-size 0.9s var(--ease-out-quart);
+    padding-inline: 0.06em;
+  }
+  .mark--highlight.is-drawn {
+    background-size: 100% 82%;
+  }
+  .mark--underline {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7 C20 2 30 11 48 6 S80 2 98 7 S114 9 118 5' fill='none' stroke='%23E3262F' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-size: 0% 0.3em;
+    background-position: 0 100%;
+    padding-bottom: 0.12em;
+    transition: background-size 1s var(--ease-out-quart);
+  }
+  .mark--underline.is-drawn {
+    background-size: 100% 0.3em;
+  }
+  /* Circle: a drawn loop on wide screens; per-line pill outlines when it wraps. */
+  .mark--circle {
+    border-radius: 0.9em;
+    padding-inline: 0.12em;
+    box-shadow: inset 0 0 0 0 transparent;
+    transition: box-shadow 0.6s;
+  }
+  .mark--circle.is-drawn {
+    box-shadow: inset 0 0 0 2.5px var(--color-red);
+  }
+  .mark-loop {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .mark--circle {
+      white-space: nowrap;
+      display: inline-block;
+      border-radius: 0;
+      padding-inline: 0;
+    }
+    .mark--circle.is-drawn {
+      box-shadow: none;
+    }
+    .mark-loop {
+      display: block;
+      position: absolute;
+      inset: -0.12em -0.32em -0.2em -0.36em;
+      width: calc(100% + 0.68em);
+      height: calc(100% + 0.32em);
+      overflow: visible;
+      pointer-events: none;
+    }
+    .mark-loop path {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      opacity: 0;
+      transition:
+        stroke-dashoffset 1.1s var(--ease-out-quart),
+        opacity 0.1s;
+    }
+    .mark--circle.is-drawn .mark-loop path {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mark {
+      transition: none !important;
+    }
+    .mark-loop path {
+      transition: none !important;
+    }
+  }
+
+  /* Sticky notes (B) */
+  .stickynote {
+    --r: 3deg;
+    position: relative;
+    width: min(100%, 15rem);
+    padding: 1.6rem 1.1rem 1.2rem;
+    font-family: var(--font-hand);
+    font-weight: 600;
+    font-size: 1.55rem;
+    line-height: 1.1;
+    color: var(--color-ink);
+    transform: rotate(var(--r));
+    box-shadow:
+      0 1px 0 rgb(20 20 20 / 0.1),
+      0 14px 24px -14px rgb(20 20 20 / 0.45);
+  }
+  .stickynote::before {
+    content: "";
+    position: absolute;
+    top: -0.65rem;
+    left: 50%;
+    width: 4.5rem;
+    height: 1.3rem;
+    translate: -50% 0;
+    rotate: -4deg;
+    background: rgb(245 242 235 / 0.72);
+    box-shadow: 0 0 0 1px rgb(20 20 20 / 0.06);
+  }
+  .stickynote--yellow {
+    background: var(--color-yellow);
+  }
+  .stickynote--pink {
+    background: var(--color-pink);
+    --r: -3deg;
+  }
+
+  /* ── Plum transition (D) ────────────────────────────────────────────────── */
+  .wipe {
+    position: relative;
+    height: 150vh;
+  }
+  .wipe-panel {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--color-plum);
+    color: var(--color-white);
+  }
+  .wipe-word {
+    display: flex;
+    overflow: hidden;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    font-size: clamp(2.6rem, 11.5vw, 11rem);
+    padding-block: 0.05em;
+  }
+  .wipe-word > span {
+    display: inline-block;
+    white-space: pre;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wipe {
+      height: auto;
+    }
+    .wipe-panel {
+      position: relative;
+      height: 60vh;
+    }
+  }
+
+  /* ── Journey (B) ────────────────────────────────────────────────────────── */
+  .jr-route {
+    stroke-width: 4.5;
+  }
+  .jr-route-faint {
+    stroke-width: 2.5;
+    stroke-dasharray: 2 9;
+    stroke-linecap: round;
+  }
+  .jr-pin-dot {
+    r: 7px;
+    stroke-width: 2.5px;
+  }
+  .jr-head {
+    r: 7px;
+    stroke-width: 3px;
+  }
+  @media (max-width: 1023.98px) {
+    .jr-route {
+      stroke-width: 8;
+    }
+    .jr-route-faint {
+      display: none;
+    }
+    .jr-pin-dot {
+      r: 13px;
+      stroke-width: 4px;
+    }
+    .jr-head {
+      display: none;
+    }
+  }
+
+  .jr-card {
+    background: var(--color-paper);
+    border: 2px solid var(--color-ink);
+    border-radius: 18px;
+    box-shadow: 0 22px 40px -24px rgb(20 20 20 / 0.45);
+  }
+
+  /* ── Work stack (D) ─────────────────────────────────────────────────────── */
+  .stack-stage {
+    perspective: 1700px;
+    perspective-origin: 40% 30%;
+  }
+  .stack-card {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  .roll {
+    display: inline-flex;
+    overflow: hidden;
+    height: 1em;
+    line-height: 1;
+  }
+  .roll-col {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.7s var(--ease-out-quart);
+  }
+  .roll-col > span {
+    height: 1em;
+    line-height: 1;
+  }
+
+  /* ── Album ring (C) ─────────────────────────────────────────────────────── */
+  .alb-stage {
+    perspective: 1400px;
+  }
+  .alb-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-style: preserve-3d;
+  }
+  .alb-spin {
+    transform-style: preserve-3d;
+    animation: alb-spin 46s linear infinite;
+  }
+  .alb-stage:hover .alb-spin {
     animation-play-state: paused;
   }
-
-  /* ── Horizontal track ───────────────────────────────────────────────────── */
-  .track-viewport {
-    container: vp / inline-size;
+  @keyframes alb-spin {
+    to {
+      transform: rotateY(-360deg);
+    }
   }
-  .panel {
+  .alb-item {
+    position: absolute;
+    backface-visibility: visible;
+  }
+
+  /* ── Gift box (B) ───────────────────────────────────────────────────────── */
+  .gift {
     position: relative;
-    width: 100%;
-    /* Off-screen panels skip style/layout/paint until they near the viewport. */
-    content-visibility: auto;
-    contain-intrinsic-size: auto 100vw auto 900px;
+    width: var(--s);
+    height: var(--s);
+    transform-style: preserve-3d;
   }
-  @variant hz {
-    .track-viewport {
-      height: 100vh;
-      overflow: clip;
-    }
-    .track {
-      position: relative;
-      display: flex;
-      height: 100%;
-      width: max-content;
-      will-change: transform;
-    }
-    .track-main {
-      display: flex;
-      height: 100%;
-    }
-    .panel {
-      flex: none;
-      height: 100%;
-      width: var(--panel-w, 100cqw);
-    }
-    /* Its width comes from its content, so it can't be size-contained. */
-    .panel[data-auto-width] {
-      content-visibility: visible;
-    }
-    [id] {
-      scroll-margin-top: 0;
-    }
+  .gift-face {
+    position: absolute;
+    inset: 0;
+    border: 3px solid var(--color-ink);
+    background: var(--color-red);
+    backface-visibility: hidden;
   }
-  @variant stacked {
-    .track-viewport {
-      padding-top: var(--topbar-h);
-    }
+  .gift-face::before,
+  .gift-face::after {
+    content: "";
+    position: absolute;
+    background: var(--color-yellow);
+    box-shadow:
+      inset 3px 0 0 var(--color-ink),
+      inset -3px 0 0 var(--color-ink);
   }
-
-  /* ── Menu ───────────────────────────────────────────────────────────────── */
-  .menu-panel {
-    transform: translateX(-100%);
-    visibility: hidden;
-    transition:
-      transform 0.45s var(--ease-out-quart),
-      visibility 0s linear 0.45s;
+  .gift-face::before {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 22%;
+    translate: -50% 0;
   }
-  .menu-panel[data-open="true"] {
-    transform: translateX(0);
-    visibility: visible;
-    transition:
-      transform 0.45s var(--ease-out-quart),
-      visibility 0s linear 0s;
-  }
-  .menu-scrim {
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 0.3s ease-out,
-      visibility 0s linear 0.3s;
-  }
-  .menu-scrim[data-open="true"] {
-    opacity: 1;
-    visibility: visible;
-    transition:
-      opacity 0.3s ease-out,
-      visibility 0s linear 0s;
+  .gift-face.is-top::after,
+  .gift-face.is-bottom::after {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 22%;
+    translate: 0 -50%;
+    box-shadow:
+      inset 0 3px 0 var(--color-ink),
+      inset 0 -3px 0 var(--color-ink);
   }
 
+  .js .tb-grid[data-open="false"] {
+    display: none;
+  }
+  .tb-grid .tape {
+    transition: none;
+  }
 
+  /* ── Phone (C) ──────────────────────────────────────────────────────────── */
+  .is-ringing .rshake {
+    animation: shake 0.42s linear 3;
+  }
+
+  /* ── Dev-only TODO tag ──────────────────────────────────────────────────── */
+  .todo-tag {
+    display: inline-block;
+    padding: 0.2em 0.55em;
+    border: 1.5px dashed var(--color-red);
+    border-radius: 6px;
+    background: rgb(255 255 255 / 0.85);
+    color: #b3141c;
+    font: 600 0.72rem/1.3 var(--font-sans);
+    letter-spacing: 0.01em;
+    text-transform: none;
+    white-space: normal;
+  }
 }
 
-/* ── Reduced motion: nothing moves ──────────────────────────────────────── */
+/* Pinned journey map: sized from the stage (unlayered so it beats the mobile utilities). */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .jr-area {
+    container-type: size;
+  }
+  .jr-map {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: min(100cqw, 159.8cqh);
+    max-width: none;
+  }
+}
+
+/* ── Reduced motion: stop every CSS loop ────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  .marquee-track,
+  .alb-spin,
+  .hs-dot,
+  .caret,
+  .screen-caret {
+    animation: none !important;
   }
-  .cursor-blink {
-    animation: none;
+  .type-ch,
+  .hero-rise {
+    animation: none !important;
+    opacity: 1;
+    max-width: none;
+  }
+  .splash {
+    display: none;
   }
 }
-
-/* hero sizing: hero-name, hero-tagline utilities above */

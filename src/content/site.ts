@@ -3,39 +3,46 @@
  *  Every string, link, project and stat on the site lives in this file.
  *  Edit here; the components only read from it.
  *
- *  • Values written as todo("…") are placeholders. They never render.
- *    Replace them with a real string when you have it.
+ *  • Values written as todo("…") are placeholders. They never render in a
+ *    production build. In `npm run dev` a dashed TODO tag marks the spot.
  *  • `npm run todos` lists every TODO still open.
- *  • Headings are written in normal case; the CSS makes them uppercase.
+ *  • Sources: varnikayadav.com (Nov 2026) and Devpost. Journey dates and
+ *    locations were checked against each hackathon's Devpost page; the two
+ *    events that aren't on Devpost say where they were confirmed instead.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import {
   todo,
-  type Capability,
   type FeaturedProject,
   type Fillable,
-  type LogEntry,
-  type OffClockGroup,
+  type JourneyStop,
+  type Leadership,
   type MiniProject,
-  type Photo,
+  type Role,
   type SectionId,
-  type SectionMeta,
+  type SkillGroup,
   type SocialLink,
-  type TimelineEntry,
+  type SpillItem,
+  type Sticker,
 } from "./types";
 
 /* ── Identity & links ───────────────────────────────────────────────────── */
 
 export const person = {
   name: "Varnika Yadav",
+  first: "varnika",
   monogram: "VY",
-  tagline: "SWE · CS + Math @ Penn State",
   email: "varnika2271@gmail.com",
-  /** Only rendered if public/resume.pdf exists at build time. */
+  location: "State College, PA",
+  /** Rendered only if the file exists in /public at build time. */
   resumePath: "/resume.pdf",
+  resumeTodo: todo("Add your résumé as public/resume.pdf (the live site doesn't link one)"),
+  /** Your illustration, sitting on the desk edge in the hero. */
+  illustrationPath: "/me.png",
+  /** Optional: an ink drawing of your face for the nav button. A doodle is used until then. */
+  facePath: "/face.png",
 };
 
-/** Used for absolute Open Graph URLs. Vercel fills this in automatically if left as a TODO. */
 export const siteUrl: Fillable<string> = "https://varnikayadav.com";
 
 export const social: SocialLink[] = [
@@ -45,130 +52,105 @@ export const social: SocialLink[] = [
 ];
 
 export const seo = {
-  title: "Varnika Yadav — Software Engineer",
+  title: "Varnika Yadav · Software for messy, real-world problems",
   description:
-    "I’m a CS + Math double major at Penn State who builds full-stack, AI-powered tools for farms, payroll, hospitals and city water lines, and tests them until the numbers hold up.",
-  ogAlt: "Varnika Yadav — SWE · CS + Math @ Penn State",
+    "CS + Math double major at Penn State who builds full-stack, AI-powered tools for farms, payroll, hospitals and city water lines, and tests them until the numbers hold up.",
+  ogAlt: "Varnika Yadav, software for messy, real-world problems",
 };
 
-/* ── Photos (see §6 of the brief) ───────────────────────────────────────── */
+/* ── Splash & nav ───────────────────────────────────────────────────────── */
 
-export const photos: { portrait: Photo; about: Photo; aboutFallbackPosition: string } = {
-  portrait: {
-    src: "/images/varnika-portrait.jpg",
-    alt: "Portrait of Varnika Yadav",
-    objectPosition: "45% 30%",
-  },
-  about: {
-    src: "/images/varnika-about.jpg",
-    alt: "Varnika Yadav at Cal Hacks 13.0, eating a cup of mango",
-    objectPosition: "55% 40%",
-  },
-  /** If varnika-about.jpg is missing, the portrait is reused with this crop. */
-  aboutFallbackPosition: "50% 70%",
-};
+export const splash = { lines: ["VARNIKA", "YADAV"] };
 
-/* ── Panels, in order (labels, HUD names) ───────────────────────────────── */
-
-export const sections: Record<SectionId, SectionMeta> = {
-  top: { id: "top", hud: "intro" },
-  "what-i-do": { id: "what-i-do", label: "// what i do", hud: "what i do" },
-  "how-i-build": { id: "how-i-build", label: "// how i build", hud: "how i build" },
-  work: { id: "work", label: "// selected work", hud: "selected work" },
-  "hackathon-log": { id: "hackathon-log", label: "// hackathon log", hud: "hackathon log" },
-  about: { id: "about", hud: "hey, i’m varnika" },
-  experience: { id: "experience", label: "// experience", hud: "experience" },
-  "off-the-clock": { id: "off-the-clock", label: "// off the clock", hud: "off the clock" },
-  "good-fit": { id: "good-fit", label: "// good fit?", hud: "good fit?" },
-  toolbox: { id: "toolbox", label: "// toolbox", hud: "toolbox" },
-  contact: { id: "contact", label: "// let’s build", hud: "let’s build" },
-  footer: { id: "footer", hud: "online" },
-};
-
-export const sectionOrder: SectionId[] = [
-  "top",
-  "what-i-do",
-  "how-i-build",
-  "work",
-  "hackathon-log",
-  "about",
-  "experience",
-  "off-the-clock",
-  "good-fit",
-  "toolbox",
-  "contact",
-  "footer",
-];
-
-/* ── Shell: rail, menu ──────────────────────────────────────────────────── */
-
-export const rail = {
-  cta: "Open to Summer 2027 SWE internships",
-  ctaTarget: "contact" as SectionId,
-};
-
-export const menu = {
+export const nav: { links: { label: string; target: SectionId }[]; homeLabel: string; resumeLabel: string } = {
   links: [
-    { label: "Work", target: "work" },
-    { label: "About", target: "about" },
-    { label: "Experience", target: "experience" },
-    { label: "Off the clock", target: "off-the-clock" },
-    { label: "Toolbox", target: "toolbox" },
-    { label: "Contact", target: "contact" },
-  ] satisfies { label: string; target: SectionId }[],
-  copyright: "© 2026 Varnika Yadav",
+    { label: "work", target: "work" },
+    { label: "about", target: "about" },
+    { label: "journey", target: "journey" },
+    { label: "playground", target: "playground" },
+    { label: "contact", target: "contact" },
+  ],
+  homeLabel: "Varnika Yadav, back to top",
+  resumeLabel: "Resume",
 };
 
 export const skipLink = { label: "Skip to work", target: "work" as SectionId };
 
-/* ── Panel 1 · Hero ─────────────────────────────────────────────────────── */
+/* ── 1 · Hero ───────────────────────────────────────────────────────────── */
 
 export const hero = {
-  lockup: "Varnika Yadav — SWE · CS + Math @ Penn State",
-  headline: ["Software", "for messy,", "real-world", "problems."],
-  card: "I’m a CS + Math double major at Penn State who builds full-stack, AI-powered tools for farms, payroll, hospitals and city water lines, and tests them until the numbers hold up.",
-  cta: { lead: "Want to build together?", action: "Let’s talk", target: "contact" as SectionId },
-  hint: "scroll ↓ to move →",
-  /** Text on the spinning sticker on the hero photo (links to the contact panel). */
-  badge: "Open to Summer 2027 SWE internships",
+  hello: "hello,",
+  intro: "my name is",
+  name: "varnika",
+  kaomoji: ">ω<",
+  tagline: "Software for messy, real-world problems.",
+  bio: "CS + Math @ Penn State ’28. I build full-stack, AI-powered tools for farms, payroll, hospitals and city water systems, and test them until the numbers hold up.",
+  hint: "psst: the coloured things on my desk are clickable",
+  marquee: "PROJECTS",
+  illustrationNote: "your illustration here",
+  /** Labels that pop up on the desk objects, and where each one goes. */
+  hotspots: {
+    laptop: { label: "$ ./mysh → work", target: "work" as SectionId },
+    notebooks: { label: "∫ math notes → experience", target: "experience" as SectionId },
+    trophy: { label: "prizes → journey", target: "journey" as SectionId },
+    eightball: { label: "8-ball → off the clock", target: "off-the-clock" as SectionId },
+    candles: { label: "PSU Quants → experience", target: "experience" as SectionId },
+    phone: { label: "ring ring → contact", target: "contact" as SectionId },
+  },
 };
 
-/* ── Panel 2 · What I do ────────────────────────────────────────────────── */
+/* ── 2 · About story ────────────────────────────────────────────────────── */
 
-export const whatIDo = {
-  heading: "I’m a full-stack developer.",
-  body: [
-    "I find a problem someone is losing money, time or sleep over and ship a working product around it, usually in 36 hours, with a team, on very little sleep. TypeScript, React and Next.js on the front; Python and FastAPI on the back; LLMs and ML models where they actually earn their place.",
-    "Off the hackathon floor I’m a strategy analyst at PSU Quants and an undergraduate researcher studying systemic risk, so I care a lot about whether the numbers are right.",
+export type StorySegment = { text: string; mark?: "highlight" | "underline" | "circle" };
+
+export const aboutStory: {
+  kicker: string;
+  heading: string;
+  paragraphs: { segments: StorySegment[]; note?: { text: string; tone: "yellow" | "pink" } }[];
+  footnote: string;
+} = {
+  kicker: "$ cat about.txt",
+  heading: "Hey, I’m Varnika!",
+  paragraphs: [
+    {
+      segments: [
+        { text: "I’m a double major in " },
+        { text: "CS and Math", mark: "highlight" },
+        {
+          text: " at Penn State, class of 2028. I like problems where the math and the people both matter: crop losses, payroll, patients waiting on prescriptions, aging city infrastructure.",
+        },
+      ],
+      note: { text: "3 or 4 hackathons a semester ✦", tone: "yellow" },
+    },
+    {
+      segments: [
+        { text: "I build full-stack, AI-powered tools for " },
+        { text: "messy, real-world problems", mark: "underline" },
+        { text: ", usually in 36 hours, with a team, on very little sleep, and I " },
+        { text: "test them until the numbers hold up", mark: "circle" },
+        { text: "." },
+      ],
+      note: { text: "I help run them too: education team @ HackPSU →", tone: "pink" },
+    },
+    {
+      segments: [
+        {
+          text: "Off the hackathon floor I’m a strategy analyst at PSU Quants and an undergraduate researcher studying systemic risk, so I care a lot about whether the numbers are right.",
+        },
+      ],
+      note: { text: "exec team @ Builders Collective: idea-to-prototype workshops", tone: "yellow" },
+    },
   ],
-  button: { label: "See the work", target: "work" as SectionId },
+  footnote: "Penn State Math Club ✦ Directed Reading Program Scholar",
 };
 
-/* ── Panel 3 · How I build ──────────────────────────────────────────────── */
-
-export const howIBuild = [
-  {
-    step: "01",
-    heading: "Find the real problem.",
-    body: "Before we wrote a line of RollPay, my teammate had a 29-page payroll runbook and a log of 125 real problems from three pay periods. We built for those, then walked a 25-person restaurant in Oakland through it to make sure it wasn’t one company’s headache.",
-  },
-  {
-    step: "02",
-    heading: "Prove it works.",
-    body: "Demos are easy. I’d rather show receipts. RollPay matched 35 of 46 real pay periods to the cent and caught 59 of 60 planted errors with zero false alarms. Blue Grid’s model put 73% of the pipes that actually broke into its highest-risk group.",
-  },
-  {
-    step: "03",
-    heading: "Keep a human in the loop.",
-    body: "Every message RollPay’s AI drafts gets approved by a person before it sends. Nod redacts emails, phone, card and bank numbers before anything is stored, and blocks any feature with a medium-or-higher Snyk finding.",
-  },
-];
-
-/* ── Panel 4 · Selected work ────────────────────────────────────────────── */
+/* ── 3 · Projects (used by Journey + Work) ──────────────────────────────── */
 
 export const work = {
-  heading: "Things I’ve shipped.",
-  meta: "8 hackathon builds · 4 prizes · live demos below",
+  kicker: "$ ls ~/shipped",
+  headingLead: "Things I shipped, and ",
+  headingMark: "the numbers they moved",
+  headingTail: ".",
   moreHeading: "More builds",
 };
 
@@ -177,22 +159,16 @@ export const featuredProjects: FeaturedProject[] = [
     slug: "terrametric",
     name: "Terrametric",
     event: "Bitcamp 2026 (UMD)",
-    award: {
-      stamp: "3 prizes",
-      details: [
-        "Real World Prize (Ambrook track)",
-        "Best Champion of Open Source w/ Featherless",
-        "Best Intermediate Data Science Track Hack",
-      ],
-    },
+    awards: [
+      "Real World Prize (Ambrook track)",
+      "Best Champion of Open Source w/ Featherless",
+      "Best Intermediate Data Science Track Hack",
+    ],
+    prizeCount: 3,
     oneLiner:
       "Live crop-stress scores, 14-day forecasts and dollar-priced prescriptions that tell growers which field to treat first.",
-    bullets: [
-      "XGBoost scores stress per field from five satellite signals (NDVI, NDWI, SWIR heat stress, NASA SMAP soil moisture, rainfall deficit), and a second model prices it in dollars from USDA yields and crop prices ($888/acre corn, $628/acre soybeans).",
-      "A FastAPI backend streams 120+ live field records over WebSockets to a 3D globe and real-time dashboard.",
-      "An ROI engine weighs each fix’s cost against loss avoided and the cost of waiting.",
-      "Event-driven SMS alerts go out for high-risk fields.",
-    ],
+    stat: { value: "3 prizes", caption: "at Bitcamp 2026" },
+    stat2: { value: "14-day", caption: "crop-stress forecast" },
     stack: ["Python", "FastAPI", "WebSockets", "XGBoost", "Next.js", "TypeScript", "GLSL", "SQLite", "Vercel"],
     links: {
       live: "https://terrametric-delta.vercel.app",
@@ -200,44 +176,36 @@ export const featuredProjects: FeaturedProject[] = [
       devpost: "https://devpost.com/software/terrametric",
     },
     team: ["Abhinav Dasari", "Vidyut Sriram"],
-    // myRole: the bullets above already describe Varnika's work.
+    image: "/projects/terrametric.jpg",
   },
   {
     slug: "firedrill-ar",
     name: "FireDrill AR",
     event: "MOLTEN Spatial Hackathon, LA Tech Week 2026",
     eventMeta: "6 hours · team of 5 · Apple Vision Pro",
-    award: {
-      stamp: "DataFeel winner",
-      details: ["Best Use of DataFeel (DataFeel track)", "Won a $1,500 DataFeel kit"],
-    },
+    awards: ["Best Use of DataFeel (DataFeel track)", "Won a $1,500 DataFeel kit"],
+    prizeCount: 1,
     oneLiner:
       "An immersive fire drill for kids and students: scan a real room and it becomes a fire you can see, hear and feel.",
-    bullets: [
-      "A headset scan of the room becomes the stage: fire spreads across the floor and furniture, smoke drops from the ceiling so students learn to stay low, and EXIT and BLOCKED signs mark the way out.",
-      "DataFeel haptic dots on both wrists warm up on the side the fire is on, buzz in the smoke and cool down at the safe exit, with skin-safe limits (38 °C max, automatic cut-outs).",
-      "A Claude voice coach answers questions from the live room state, and every run ends with a review: the path taken, escape time, time in smoke and how long you stayed low.",
-    ],
+    stat: { value: "6 hrs", caption: "to a fire you can see, hear and feel" },
+    stat2: { value: "DataFeel", caption: "track winner" },
     stack: ["three.js", "WebXR", "Vite", "FastAPI", "WebSockets", "Claude API", "AssemblyAI", "DataFeel", "Unity"],
     links: {
       live: "https://firedrill-ar.vercel.app",
       code: "https://github.com/prakhar2000/FIreDrillAR",
     },
     team: ["Devajsinh Solanki", "Prakhar Goel", "Emma Sun", "Haotian Yin"],
-    myRole: todo("What you built on FireDrill AR"),
+    image: "/projects/firedrill-ar.jpg",
   },
   {
     slug: "rollpay",
     name: "RollPay",
-    event: "Cal Hacks 13.0 (UC Berkeley)",
+    event: "Cal Hacks 13.0",
     eventMeta: "36 hours · team of 3",
     oneLiner:
       "An AI payroll assistant that catches bad hours before payday and hands the owner a payroll that’s right.",
-    bullets: [
-      "Syncs Jobber, QuickBooks and Gusto, runs 23 rule-based checks on hours, rates and pay, and drafts a Gusto payroll for the owner to approve.",
-      "When pay data doesn’t add up, it texts the right worker or manager a short question over iMessage. A human approves every AI-drafted message first.",
-      "Validated on an anonymized real landscaping company: 35/46 pay periods matched to the cent, 59/60 planted errors caught with zero false alarms, and 700+ automated tests.",
-    ],
+    stat: { value: "59/60", caption: "planted errors caught, zero false alarms" },
+    stat2: { value: "35/46", caption: "real pay periods matched to the cent" },
     stack: ["TypeScript", "Next.js", "React", "Convex", "Claude API", "Bun", "Vitest", "Playwright", "Zod", "iMessage"],
     links: {
       live: "https://rollpay-live.vercel.app",
@@ -245,28 +213,25 @@ export const featuredProjects: FeaturedProject[] = [
       devpost: "https://devpost.com/software/rollpay",
     },
     team: ["Devajsinh Solanki", "Shanin Drucquer"],
-    // myRole: the bullets above already describe Varnika's work.
+    image: "/projects/rollpay.jpg",
   },
   {
     slug: "nod",
     name: "Nod",
     event: "AI Startup Challenge, AWS Builder Loft 2026",
     eventMeta: "6 hours · team of 3",
-    award: { stamp: "Top 5", details: ["Invited to speak at the AWS AI Summit"] },
+    awards: ["Top 5", "Invited to speak at the AWS AI Summit"],
+    prizeCount: 0,
     oneLiner:
       "Five AI agents that turn founders’ customer interviews into ranked, quote-backed feature cards, then write and ship the code.",
-    bullets: [
-      "A 5-agent system built in Python/Flask goes from raw interview transcripts to prioritized, quote-backed feature cards to shipped code.",
-      "Shared long-term memory with Cognee, so customer insights, conflicts and security lessons persist across restarts.",
-      "PII is redacted from every transcript before storage. Any feature with a medium-or-higher Snyk finding is blocked from shipping.",
-    ],
+    stat: { value: "Top 5", caption: "and invited to speak at the AWS AI Summit" },
+    stat2: { value: "5 agents", caption: "interviews → feature cards → shipped code" },
     stack: ["Python", "Flask", "AI agents", "Cognee", "Snyk", "Flexprice"],
     links: {
-      live: todo("Nod demo link"),
+      live: todo("Nod demo link (no live link on the site yet)"),
       code: "https://github.com/AnushaAgarwal27/Nod",
     },
     team: ["Anusha Agarwal", "Vedant Shirvi"],
-    // myRole: the bullets above already describe Varnika's work.
   },
   {
     slug: "blue-grid",
@@ -274,29 +239,14 @@ export const featuredProjects: FeaturedProject[] = [
     event: "UC Berkeley AI Hackathon 2026",
     oneLiner:
       "Finds the city water pipes most likely to break next and gives crews a 72-hour plan to fix them first.",
-    bullets: [
-      "Trained on a real city’s open data (its full pipe inventory and complete break history), scoring every pipe on age, material, past breaks and flood exposure.",
-      "Backtested: 73% of pipes that actually broke landed in the model’s highest-risk group.",
-      "A Leaflet map over real pipe geometry, Claude-written action plans and explanations, and a Browserbase agent that pulls fresh break records from the city’s live data portal.",
-    ],
-    stack: [
-      "Python",
-      "Flask",
-      "scikit-learn",
-      "pandas",
-      "GeoPandas",
-      "Redis",
-      "Leaflet.js",
-      "Claude API",
-      "Browserbase",
-      "Render",
-      "Vercel",
-    ],
+    stat: { value: "73%", caption: "of pipes that broke were in its highest-risk group" },
+    stat2: { value: "72-hr", caption: "repair plan for crews" },
+    stack: ["Python", "Flask", "scikit-learn", "pandas", "GeoPandas", "Redis", "Leaflet.js", "Claude API", "Browserbase"],
     links: {
       live: "https://blue-grid-kitchener.vercel.app",
       devpost: "https://devpost.com/software/blue-grid",
     },
-    myRole: todo("What you built on Blue Grid"),
+    image: "/projects/blue-grid.jpg",
   },
   {
     slug: "echo-by-relay",
@@ -304,19 +254,17 @@ export const featuredProjects: FeaturedProject[] = [
     event: "HackGT 13 (Georgia Tech)",
     oneLiner:
       "From one sentence a doctor says out loud, Echo makes sure the patient actually gets their medicine.",
-    bullets: [
-      "Voice-first: it checks coverage and prior-auth requirements, then routes the patient to a free bridge supply, a patient assistance program or cash pay.",
-      "Drafts prior-authorization letters that cite exact sentences from the drug’s FDA label, so every clinical claim is traceable.",
-      "Explains the plan to patients in Spanish or English. Caregivers see nothing until they sign a consent and privacy agreement.",
-    ],
+    stat: { value: "1 sentence", caption: "from a doctor starts the whole flow" },
+    stat2: { value: "2 languages", caption: "plans explained in Spanish or English" },
     stack: ["TypeScript", "Next.js", "Supabase", "Tailwind CSS", "xAI Grok", "Vercel"],
     links: {
-      live: "https://echobyrelay.tech",
+      // echobyrelay.tech stopped resolving (Nov 2026); this is the URL on the GitHub repo.
+      live: "https://echo-by-relay.vercel.app",
       code: "https://github.com/anantp1910/EchoByRelay",
       devpost: "https://devpost.com/software/echobyrelay",
     },
     team: ["Vedant Shirvi", "Anant Patel"],
-    myRole: todo("What you built on Echo by Relay"),
+    image: "/projects/echo-by-relay.jpg",
   },
   {
     slug: "would-you-jump",
@@ -324,28 +272,16 @@ export const featuredProjects: FeaturedProject[] = [
     event: "National Renaissance Hackathon at super{set}",
     oneLiner:
       "A private AI matchmaker for co-founders. You only find out who someone is once you’ve both said yes.",
-    bullets: [
-      "Models run in the visitor’s browser: Laya through ONNX Runtime Web in a web worker, and Bonsai 1.7B through Transformers.js and WebGPU. Your pasted background never leaves your device.",
-      "Introductions need two independent approvals before names or contact details are revealed.",
-      "Built on Next.js, React, TypeScript and TanStack Query with Supabase Postgres. Optional cloud enhancement only ever sees fields you approved.",
-    ],
-    stack: [
-      "TypeScript",
-      "Next.js",
-      "React",
-      "TanStack Query",
-      "Supabase",
-      "ONNX Runtime Web",
-      "Transformers.js",
-      "WebGPU",
-    ],
+    stat: { value: "2 yeses", caption: "before any name or contact is revealed" },
+    stat2: { value: "0 uploads", caption: "models run in your browser" },
+    stack: ["TypeScript", "Next.js", "React", "TanStack Query", "Supabase", "ONNX Runtime Web", "Transformers.js", "WebGPU"],
     links: {
       live: "https://superset-wyj.vercel.app",
       code: "https://github.com/xyzmr114/superset-WYJ",
       devpost: "https://devpost.com/software/would-you-jump",
     },
     team: ["Harsh Rathi", "Abhinav Dasari", "Anusha Agarwal"],
-    myRole: todo("What you built on Would You Jump?"),
+    image: "/projects/would-you-jump.jpg",
   },
 ];
 
@@ -355,13 +291,13 @@ export const moreBuilds: MiniProject[] = [
     name: "WatchCare-AI",
     context: "NexHacks @ Carnegie Mellon · 24 hours",
     description:
-      "Real-time fall detection on existing hospital camera feeds: pose estimation flags slumps and slides, and Firebase pushes alerts to an Android nurse app with claim/resolve and an audit trail.",
-    stack: ["Python", "OpenCV", "MediaPipe Pose", "Firebase Firestore", "Kotlin"],
+      "Real-time fall detection on existing hospital camera feeds, with alerts pushed to an Android nurse app.",
+    stack: ["Python", "OpenCV", "MediaPipe Pose", "Firebase", "Kotlin"],
     links: {
       code: "https://github.com/anantp1910/WatchCare-AI",
       devpost: "https://devpost.com/software/watchcareai",
     },
-    myRole: todo("What you built on WatchCare-AI"),
+    art: "fall-alert",
   },
   {
     slug: "fadethat",
@@ -373,7 +309,7 @@ export const moreBuilds: MiniProject[] = [
       live: "https://fadethat.vercel.app",
       code: "https://github.com/Devaj6190/FadeThat",
     },
-    myRole: todo("What you built on FadeThat"),
+    image: "/projects/fadethat.jpg",
   },
   {
     slug: "mysh",
@@ -381,82 +317,184 @@ export const moreBuilds: MiniProject[] = [
     context: "CMPSC 311",
     description: "A Unix shell in C with pipes, I/O redirection, background jobs and env-var expansion.",
     stack: ["C", "Valgrind"],
-    links: {
-      code: "https://github.com/AnushaAgarwal27/MyShell",
-    },
-    myRole:
-      "I built the tokenizer/parser, process execution, signal handling and background jobs (fork, execvp, waitpid, dup2, sigaction), and checked memory with Valgrind.",
+    links: { code: "https://github.com/AnushaAgarwal27/MyShell" },
+    art: "terminal",
   },
 ];
 
-/* ── Panel 6 · Hackathon log ────────────────────────────────────────────── */
+/* ── 4 · Journey: tail hackathons.log ───────────────────────────────────── */
 
-export const hackathonLog: { command: string; entries: LogEntry[] } = {
-  command: "tail hackathons.log",
-  entries: [
-    { event: "MOLTEN · LA Tech Week", project: "FireDrill AR", award: "DataFeel", date: "Oct 2026" },
-    { event: "Bitcamp 2026", project: "Terrametric", award: "3 prizes", date: "Apr 2026" },
-    { event: "AWS Builder Loft 2026", project: "Nod", award: "Top 5", date: todo("AWS Builder Loft date") },
-    { event: "Cal Hacks 13.0", project: "RollPay", date: todo("Cal Hacks 13.0 date") },
-    { event: "UC Berkeley AI Hack 2026", project: "Blue Grid", date: todo("UC Berkeley AI Hackathon date") },
-    { event: "HackGT 13", project: "Echo by Relay", date: todo("HackGT 13 date") },
-    { event: "super{set} Renaissance", project: "Would You Jump?", date: todo("super{set} Renaissance date") },
-    { event: "NexHacks @ CMU", project: "WatchCare-AI", date: "Jan 2026" },
+export const journey: { kicker: string; heading: string; hint: string; stops: JourneyStop[] } = {
+  kicker: "$ tail hackathons.log",
+  heading: "One map, eight hackathons.",
+  hint: "keep scrolling to follow the route",
+  stops: [
+    {
+      id: "home",
+      place: "state-college",
+      city: "State College, PA",
+      event: "Home base: Penn State",
+      dates: "CS + Math, class of 2028",
+      story: "Where the route starts. I go to three or four hackathons a semester, and help run HackPSU too.",
+      stat: { value: "3–4", caption: "hackathons a semester" },
+      source: "varnikayadav.com",
+    },
+    {
+      id: "nexhacks",
+      place: "pittsburgh",
+      city: "Pittsburgh, PA",
+      event: "NexHacks @ Carnegie Mellon",
+      dates: "Jan 17–18, 2026",
+      project: "WatchCare-AI",
+      projectSlug: "watchcare-ai",
+      story: "Fall detection on the hospital cameras that already exist, pushing alerts straight to a nurse’s phone.",
+      stat: { value: "24 hrs", caption: "camera feed to nurse alert" },
+      source: "Devpost",
+      sourceUrl: "https://nexhacks.devpost.com/",
+    },
+    {
+      id: "bitcamp",
+      place: "college-park",
+      city: "College Park, MD",
+      event: "Bitcamp 2026",
+      dates: "Apr 10–12, 2026",
+      project: "Terrametric",
+      projectSlug: "terrametric",
+      prize: "3 prizes, incl. Real World Prize (Ambrook)",
+      story: "Crop-stress scores and dollar-priced prescriptions that tell growers which field to treat first.",
+      stat: { value: "3", caption: "prizes in one weekend" },
+      source: "Devpost",
+      sourceUrl: "https://bitcamp-2026.devpost.com/",
+    },
+    {
+      id: "berkeley-ai",
+      place: "berkeley",
+      city: "Berkeley, CA",
+      event: "UC Berkeley AI Hackathon 2026",
+      dates: "Jun 20–21, 2026",
+      project: "Blue Grid",
+      projectSlug: "blue-grid",
+      story: "Trained on a real city’s pipe inventory and break history to find the water mains most likely to fail next.",
+      stat: { value: "73%", caption: "of broken pipes were in the top-risk group" },
+      source: "Devpost",
+      sourceUrl: "https://ai-hackathon-2026.devpost.com/",
+    },
+    {
+      id: "hackgt",
+      place: "atlanta",
+      city: "Atlanta, GA",
+      event: "HackGT 13",
+      dates: "Sep 25–27, 2026",
+      project: "Echo by Relay",
+      projectSlug: "echo-by-relay",
+      story: "A voice-first copilot that turns one sentence from a doctor into coverage checks and a plan the patient understands.",
+      stat: { value: "1", caption: "sentence from a doctor is all it needs" },
+      source: "Devpost",
+      sourceUrl: "https://hackgt13.devpost.com/",
+    },
+    {
+      id: "molten",
+      place: "inglewood",
+      city: "Los Angeles (Inglewood), CA",
+      event: "MOLTEN Spatial Hackathon, LA Tech Week",
+      dates: "Oct 2026",
+      project: "FireDrill AR",
+      projectSlug: "firedrill-ar",
+      prize: "Best Use of DataFeel",
+      story: "Scan a real room on a Vision Pro and it becomes a fire drill you can see, hear and feel on your wrists.",
+      stat: { value: "6 hrs", caption: "team of 5, one Apple Vision Pro" },
+      source: "Not on Devpost: venue from the event’s Luma listing",
+      sourceUrl: "https://luma.com/5jo47m0d",
+    },
+    {
+      id: "aws-loft",
+      place: "san-francisco",
+      city: "San Francisco, CA",
+      event: "AI Startup Challenge, AWS Builder Loft",
+      dates: "Oct 20, 2026",
+      project: "Nod",
+      projectSlug: "nod",
+      prize: "Top 5, invited to speak at the AWS AI Summit",
+      story: "Five agents turn founders’ customer interviews into ranked, quote-backed feature cards, then ship the code.",
+      stat: { value: "Top 5", caption: "out of the whole room" },
+      source: "Not on Devpost: date and venue from the event’s Luma listing",
+      sourceUrl: "https://luma.com/0oww46mm",
+    },
+    {
+      id: "superset",
+      place: "san-francisco",
+      city: "San Francisco, CA",
+      event: "National Renaissance Hackathon at super{set}",
+      dates: "Oct 22, 2026",
+      project: "Would You Jump?",
+      projectSlug: "would-you-jump",
+      story: "A private co-founder matchmaker whose models run in your browser. Names stay hidden until both people say yes.",
+      stat: { value: "2", caption: "yeses before anyone is revealed" },
+      source: "Devpost",
+      sourceUrl: "https://national-renaissance-hackathon.devpost.com/",
+    },
+    {
+      id: "calhacks",
+      place: "san-francisco",
+      city: "San Francisco, CA",
+      event: "Cal Hacks 13.0",
+      dates: "Oct 23–25, 2026",
+      project: "RollPay",
+      projectSlug: "rollpay",
+      story: "An AI payroll assistant, validated on a real landscaping company’s books before anyone got paid.",
+      stat: { value: "59/60", caption: "planted payroll errors caught" },
+      source: "Devpost (venue: 3601 Lyon St, San Francisco)",
+      sourceUrl: "https://cal-hacks-13-0.devpost.com/",
+    },
   ],
 };
 
-/* ── Panel 7 · About ────────────────────────────────────────────────────── */
+/* ── 5 · Transitions ────────────────────────────────────────────────────── */
 
-export const about = {
-  heading: "Hey, I’m Varnika!",
-  body: [
-    "I’m a double major in Computer Science and Mathematics at Penn State, class of 2028. I like problems where the math and the people both matter: crop losses, payroll, patients waiting on prescriptions, aging city infrastructure.",
-    "I go to three or four hackathons a semester, and I help run them too: I’m on the education team for HackPSU, Penn State’s flagship hackathon, and on the exec team of Builders Collective, where I run idea-to-prototype workshops and take members to hackathons.",
-  ],
-  footnote: "Penn State Math Club · Directed Reading Program Scholar",
-  /** Small tag stamped on the about photo. */
-  photoTag: "Cal Hacks 13.0",
-};
+export const transitions = { experience: "EXPERIENCE", offTheClock: "OFF THE CLOCK" };
 
-/* ── Panel 8 · Experience ───────────────────────────────────────────────── */
+/* ── 6 · Experience ─────────────────────────────────────────────────────── */
 
 export const experience: {
-  experienceHeading: string;
-  experience: TimelineEntry[];
+  kicker: string;
+  heading: string;
+  roles: Role[];
   leadershipHeading: string;
-  leadership: TimelineEntry[];
-  education: { school: string; degree: string; expected: string; coursework: string[] };
+  leadership: Leadership[];
+  education: { degree: string; school: string; expected: string; coursework: string[] };
 } = {
-  experienceHeading: "Experience",
-  experience: [
-    {
-      role: "Strategy Analyst, Microstructure Trading Algorithm",
-      org: "PSU Quants",
-      dates: "Sept 2025–Present",
-      location: "State College, PA",
-      description:
-        "Analyze high-frequency order book data to model liquidity imbalances, spread dynamics and trade impact. Backtest strategies on Sharpe ratio, drawdown and execution efficiency, and work with engineers to turn trading logic into code.",
-    },
-    {
-      role: "Undergraduate Researcher",
-      org: "Dr. Stefan M. Lewellen, Penn State",
-      dates: "Jan 2026–Present",
-      description: "Quantitative models of shadow banking, systemic risk and financial intermediation.",
-    },
+  kicker: "$ cat experience.log",
+  heading: "Where I’ve worked.",
+  roles: [
     {
       role: "Learning Assistant & Grader",
       org: "Penn State Mathematics",
-      dates: "Aug 2025–Present",
-      description:
-        "Learning assistant for MATH 220 (Matrices, 50+ students) and MATH 230 (Calculus & Vector Analysis); grader for MATH 22 (80+ students) and MATH 230.",
+      dates: "Aug 2025 to now",
+      description: "LA for MATH 220 (Matrices, 50+ students) and MATH 230 (Calculus & Vector Analysis); grader for MATH 22 (80+ students) and MATH 230.",
+      icon: "integral",
+    },
+    {
+      role: "Strategy Analyst, Microstructure Trading Algorithm",
+      org: "PSU Quants",
+      dates: "Sept 2025 to now",
+      location: "State College, PA",
+      description: "Model liquidity imbalances, spread dynamics and trade impact from high-frequency order book data, and backtest strategies on Sharpe ratio, drawdown and execution.",
+      icon: "candles",
+    },
+    {
+      role: "Undergraduate Researcher",
+      org: "Penn State Research, Dr. Stefan M. Lewellen",
+      dates: "Jan 2026 to now",
+      description: "Quantitative models of shadow banking, systemic risk and financial intermediation.",
+      icon: "bank",
     },
     {
       role: "National EdTech & IT Intern",
       org: "Lavner Education",
-      dates: "May–Aug 2026",
+      dates: "May to Aug 2026",
       location: "Philadelphia, PA",
-      description:
-        "Supported IT for 50+ STEM summer camp sites nationwide (robotics, Minecraft, Roblox and AI programs) and resolved 900+ support tickets, working directly with instructors to keep camps running.",
+      description: "IT for 50+ STEM summer camp sites nationwide (robotics, Minecraft, Roblox, AI), working directly with instructors to keep camps running.",
+      icon: "robot",
     },
   ],
   leadershipHeading: "Leadership",
@@ -464,47 +502,66 @@ export const experience: {
     {
       role: "Education Team Organizer",
       org: "HackPSU",
-      dates: "Sept 2025–Present",
-      description: "Plan pre-hackathon workshops with campus clubs and run voting and judging at Penn State’s largest hackathon.",
+      dates: "Sept 2025 to now",
+      description: "Pre-hackathon workshops with campus clubs; voting and judging at Penn State’s largest hackathon.",
     },
     {
-      role: "Executive Team: Event Planner & Secretary",
+      role: "Exec Team: Event Planner & Secretary",
       org: "Builders Collective",
-      dates: "May 2026–Present",
+      dates: "May 2026 to now",
       description: "Helped run c0mpiled-15 ($10K+ in prizes) and get Penn State teams to hackathons in SF and LA.",
     },
     {
       role: "Web Manager",
-      org: "Penn State ERO Billiards Club",
-      dates: "Feb 2026–Present",
-      description: "Run the club site: schedules, results, tournament sign-up forms and weekly recaps.",
+      org: "ERO Billiards Club",
+      dates: "Feb 2026 to now",
+      description: "Run the club site: schedules, results, tournament sign-ups and weekly recaps.",
     },
     {
       role: "Team Lead",
       org: "Women Power Society",
-      dates: "2020–2023",
+      dates: "2020 to 2023",
       description: "Led a program that taught 100 adults in slum communities to read and write in Hindi.",
     },
   ],
   education: {
+    degree: "B.S. Computer Science + B.S. Mathematics",
     school: "The Pennsylvania State University",
-    degree: "B.S. Computer Science & B.S. Mathematics",
-    expected: "expected May 2028",
-    coursework: [
-      "Data Structures & Algorithms",
-      "Systems Programming",
-      "Probability",
-      "Linear Programming",
-      "Real Analysis",
-    ],
+    expected: "May 2028",
+    coursework: ["Data Structures & Algorithms", "Systems Programming", "Probability", "Linear Programming", "Real Analysis"],
   },
 };
 
-/* ── Panel 9 · Off the clock ───────────────────────────────────────────── */
+/** Counted from the data above so they stay true when you add things. */
+const projectCount = featuredProjects.length + moreBuilds.length;
+const prizeCount = featuredProjects.reduce((n, p) => n + (p.prizeCount ?? 0), 0);
+const hackathonCount = journey.stops.filter((s) => s.id !== "home").length;
 
-export const offTheClock: { heading: string; groups: OffClockGroup[] } = {
-  heading: "Off the clock.",
-  groups: [
+export const bigStats: { value: number; suffix?: string; caption: string }[] = [
+  { value: 900, suffix: "+", caption: "support tickets resolved at Lavner Education" },
+  { value: 50, suffix: "+", caption: "STEM camp sites kept running" },
+  { value: projectCount, caption: "projects shipped" },
+  { value: hackathonCount, caption: "hackathons" },
+  { value: prizeCount, caption: "hackathon prizes" },
+];
+
+/* ── 7 · Off the clock ──────────────────────────────────────────────────── */
+
+export const offTheClock: {
+  heading: string;
+  numbers: [string, string];
+  funFact: string;
+  mission: string;
+  hint: string;
+  columns: { label: string; items: { name: string; note?: string }[] }[];
+  spill: SpillItem[];
+} = {
+  heading: "What’s in my head",
+  numbers: ["20", "28"],
+  funFact: "Fun fact: I speak Hindi, English and Punjabi, and I run the website for Penn State’s billiards club.",
+  mission: "Building software for messy, real-world problems.",
+  hint: "class of 2028",
+  columns: [
     {
       label: "languages i speak",
       items: [
@@ -515,101 +572,122 @@ export const offTheClock: { heading: string; groups: OffClockGroup[] } = {
     },
     {
       label: "when i’m not coding",
-      items: [
-        { name: "Billiards", note: "ERO Billiards Club" },
-        { name: "Cats" },
-        { name: "Horses" },
-        { name: "Memes" },
-      ],
+      items: [{ name: "Billiards", note: "ERO Billiards Club" }, { name: "Cats" }, { name: "Horses" }, { name: "Memes" }],
     },
     {
       label: "always learning",
       items: [
         { name: "Machine Learning Specialization", note: "DeepLearning.AI & Stanford · 2025" },
-        { name: "NAiSS Machine Learning Bootcamp", note: "Nittany AI Student Society · 2026" },
-        { name: "Directed Reading Program", note: "Number theory & proofs · 2026" },
+        { name: "NAiSS ML Bootcamp", note: "Nittany AI Student Society · 2026" },
+        { name: "Directed Reading Program", note: "number theory & proofs · 2026" },
         { name: "Penn State Math Club" },
       ],
     },
   ],
-};
-
-/* ── Panel 10 · Good fit ─────────────────────────────────────────────────── */
-
-export const goodFit = {
-  heading: "Where I’ll be useful.",
-  roles: ["Full-stack", "Backend", "AI/ML", "Quant-dev"],
-  body: [
-    "I’m looking for Summer 2027 software engineering internships: full-stack, backend, AI/ML, or quant-dev teams.",
-    "We’ll get along if your team ships fast, sweats whether the numbers are actually right, and wants an intern who has already taken products from an empty repo to a live demo in 36 hours, with tests.",
+  spill: [
+    { kind: "eightball" },
+    { kind: "bubble", text: "नमस्ते", lang: "hi", label: "Hindi" },
+    { kind: "cat" },
+    { kind: "candles" },
+    { kind: "bubble", text: "hello!", lang: "en", label: "English" },
+    { kind: "book", label: "number theory" },
+    { kind: "horse" },
+    { kind: "laptop" },
+    { kind: "bubble", text: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", lang: "pa", label: "Punjabi" },
+    { kind: "network" },
+    { kind: "meme" },
   ],
-  cta: { lead: "Hiring?", action: "Let’s talk", target: "contact" as SectionId },
 };
 
-/* ── Panel 10 · Toolbox ─────────────────────────────────────────────────── */
+/* ── 8 · Playground ─────────────────────────────────────────────────────── */
 
-export const toolbox: Capability[] = [
-  {
-    heading: "Full-stack web.",
-    tags: ["TypeScript", "JavaScript", "React", "Next.js", "Tailwind CSS", "shadcn/ui", "TanStack Query", "HTML/CSS"],
+export const playground: {
+  kicker: string;
+  jam: {
+    heading: string;
+    body: string;
+    spotifyLabel: string;
+    playlistUrl: Fillable<string>;
+    /** Square cover images in /public/playlist, e.g. "/playlist/01.jpg". */
+    covers: Fillable<{ src: string; alt: string }[]>;
+  };
+  stickers: { heading: string; hint: string; items: Sticker[] };
+} = {
+  kicker: "$ open ~/playground",
+  jam: {
+    heading: "jam with me",
+    body: "what’s on repeat while I build",
+    spotifyLabel: "spotify",
+    playlistUrl: todo("Your Spotify playlist link"),
+    covers: todo("8 to 12 square album covers in public/playlist/ (01.jpg, 02.jpg, …)"),
   },
-  {
-    heading: "Backend & real-time.",
-    tags: [
-      "Python",
-      "FastAPI",
-      "Flask",
-      "Node.js",
-      "Bun",
-      "WebSockets",
-      "REST APIs",
-      "Convex",
-      "Supabase/Postgres",
-      "Firebase Firestore",
-      "Redis",
-      "SQL",
+  stickers: {
+    heading: "Sticker wall",
+    hint: "one for every hackathon. drag them around",
+    items: [
+      { id: "bitcamp", lines: ["BITCAMP", "’26", "★ 3 PRIZES"], shape: "circle", tone: "yellow" },
+      { id: "calhacks", lines: ["CAL HACKS", "13.0"], shape: "ticket", tone: "red" },
+      { id: "hackgt", lines: ["HACKGT", "13"], shape: "hex", tone: "paper" },
+      { id: "molten", lines: ["MOLTEN", "★ DATAFEEL"], shape: "flame", tone: "red" },
+      { id: "superset", lines: ["super", "set"], shape: "braces", tone: "paper" },
+      { id: "berkeley", lines: ["AI HACK", "BERKELEY ’26"], shape: "burst", tone: "yellow" },
+      { id: "aws", lines: ["TOP 5", "AWS LOFT"], shape: "bubble", tone: "red" },
+      { id: "nexhacks", lines: ["NEXHACKS", "@ CMU"], shape: "rounded", tone: "yellow" },
+      { id: "hackpsu", lines: ["HACKPSU", "ORGANIZER"], shape: "circle", tone: "paper" },
     ],
   },
-  {
-    heading: "AI & ML.",
-    tags: [
-      "LLM APIs (Claude, Grok, DeepSeek)",
-      "Multi-agent systems",
-      "XGBoost",
-      "scikit-learn",
-      "Pose estimation (MediaPipe/OpenCV)",
-      "In-browser inference (ONNX Runtime Web, Transformers.js, WebGPU)",
-    ],
-  },
-  {
-    heading: "Data & quant.",
-    tags: [
-      "pandas",
-      "GeoPandas",
-      "Satellite & geospatial data",
-      "Backtesting",
-      "Order-book analysis",
-      "Probability & linear programming",
-    ],
-  },
-  {
-    heading: "Systems & shipping.",
-    tags: ["C", "Java", "Linux/Unix", "Git", "Vitest", "Playwright", "Zod", "Snyk", "Vercel", "Render", "Kotlin/Android"],
-  },
-];
+};
 
-/* ── Panel 11 · Contact ─────────────────────────────────────────────────── */
+/* ── 9 · Toolbox ────────────────────────────────────────────────────────── */
+
+export const toolbox: { kicker: string; headingLead: string; headingMark: string; cta: string; reset: string; groups: SkillGroup[] } = {
+  kicker: "$ unzip toolbox.zip",
+  headingLead: "Everything I know, ",
+  headingMark: "unwrapped",
+  cta: "click to unwrap",
+  reset: "wrap it back up",
+  groups: [
+    {
+      heading: "Frontend",
+      tags: ["TypeScript", "JavaScript", "React", "Next.js", "Tailwind CSS", "shadcn/ui", "TanStack Query", "HTML/CSS"],
+    },
+    {
+      heading: "Backend & real-time",
+      tags: ["Python", "FastAPI", "Flask", "Node.js", "Bun", "WebSockets", "REST APIs", "Convex", "Supabase/Postgres", "Firebase Firestore", "Redis", "SQL"],
+    },
+    {
+      heading: "AI/ML",
+      tags: [
+        "LLM APIs (Claude, Grok, DeepSeek)",
+        "Multi-agent systems",
+        "XGBoost",
+        "scikit-learn",
+        "Pose estimation (MediaPipe/OpenCV)",
+        "In-browser inference (ONNX Runtime Web, Transformers.js, WebGPU)",
+      ],
+    },
+    {
+      heading: "Data & quant",
+      tags: ["pandas", "GeoPandas", "Satellite & geospatial data", "Backtesting", "Order-book analysis", "Probability & linear programming"],
+    },
+    {
+      heading: "Systems & tooling",
+      tags: ["C", "Java", "Linux/Unix", "Git", "Vitest", "Playwright", "Zod", "Snyk", "Vercel", "Render", "Kotlin/Android"],
+    },
+  ],
+};
+
+/* ── 10 · Contact ───────────────────────────────────────────────────────── */
 
 export const contact = {
+  kicker: "$ ./mysh --call varnika",
   heading: "Let’s build something.",
-  body: "Internship, hackathon team, or a problem that needs building? My inbox is open.",
-  copyLabel: "Copy email address",
-  copiedToast: "copied ✓",
-  resumeLabel: "Résumé",
-};
-
-/* ── Panel 12 · Footer ──────────────────────────────────────────────────── */
-
-export const footer = {
-  heading: "Where I hang out online",
+  line: "Looking for Summer 2027 SWE internships: full-stack, backend, AI/ML, quant-dev.",
+  hint: "pick up the phone",
+  ringing: "RING RING",
+  bubbleLead: "hi! it’s varnika.",
+  copyLabel: "copy",
+  copiedLabel: "copied ✓",
+  marquee: "SAY HI",
+  copyright: "© 2026 Varnika Yadav",
 };

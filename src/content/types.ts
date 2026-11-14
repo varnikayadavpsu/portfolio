@@ -1,9 +1,10 @@
 /**
  * Types for src/content/site.ts.
  *
- * Anything Varnika still has to provide is written as `todo("…")`. A TODO is
- * never rendered: components call `filled()` and skip the value until it's a
- * real string. Run `npm run todos` to list every open TODO.
+ * Anything still missing is written as `todo("…")`. A TODO never renders in a
+ * production build: components call `filled()` and skip the value until it's a
+ * real string. In `npm run dev` a small dashed "TODO" tag shows where it goes.
+ * Run `npm run todos` to list every open TODO.
  */
 
 export type Todo = { readonly todo: string };
@@ -29,97 +30,17 @@ export function filled<T>(value: Fillable<T> | undefined | null): T | undefined 
   return value;
 }
 
+/** Ids of the on-page sections (used for anchors and nav). */
 export type SectionId =
   | "top"
-  | "what-i-do"
-  | "how-i-build"
-  | "work"
-  | "hackathon-log"
   | "about"
+  | "journey"
+  | "work"
   | "experience"
   | "off-the-clock"
-  | "good-fit"
+  | "playground"
   | "toolbox"
-  | "contact"
-  | "footer";
-
-export type SectionMeta = {
-  id: SectionId;
-  /** Label shown in the gap of the panel frame, e.g. "// selected work". Omit for an unbroken frame. */
-  label?: string;
-  /** Short name shown in the bottom-right progress HUD. */
-  hud: string;
-};
-
-export type Photo = {
-  /** Path inside /public, e.g. "/images/varnika-portrait.jpg". */
-  src: string;
-  alt: Fillable<string>;
-  /** CSS object-position, e.g. "50% 20%". Adjust to move the crop. */
-  objectPosition: string;
-};
-
-export type ProjectLinks = {
-  live?: Fillable<string>;
-  code?: Fillable<string>;
-  devpost?: Fillable<string>;
-};
-
-export type Award = {
-  /** Short text inside the round stamp, e.g. "3 prizes". */
-  stamp: string;
-  /** Full prize names, listed on the ticket stub. */
-  details?: string[];
-};
-
-export type FeaturedProject = {
-  slug: string;
-  name: string;
-  event: string;
-  /** Extra event facts, e.g. "36 hours · team of 3". */
-  eventMeta?: string;
-  award?: Award;
-  oneLiner: string;
-  bullets: string[];
-  stack: string[];
-  links: ProjectLinks;
-  team?: string[];
-  /** What Varnika personally built. Not rendered until filled. */
-  myRole?: Fillable<string>;
-};
-
-export type MiniProject = {
-  slug: string;
-  name: string;
-  /** Where/how it was built, e.g. "NexHacks @ Carnegie Mellon · 24 hours". */
-  context: string;
-  description: string;
-  stack: string[];
-  links: ProjectLinks;
-  myRole?: Fillable<string>;
-};
-
-export type LogEntry = {
-  event: string;
-  project: string;
-  /** Short award text, e.g. "3 prizes". Adds a ★. */
-  award?: string;
-  /** e.g. "Apr 2026". Rendered only when filled. */
-  date?: Fillable<string>;
-};
-
-export type TimelineEntry = {
-  role: string;
-  org: string;
-  dates: string;
-  location?: string;
-  description?: string;
-};
-
-export type Capability = {
-  heading: string;
-  tags: string[];
-};
+  | "contact";
 
 export type SocialKey = "linkedin" | "github" | "devpost";
 
@@ -129,7 +50,114 @@ export type SocialLink = {
   href: string;
 };
 
-export type OffClockGroup = {
-  label: string;
-  items: { name: string; note?: string }[];
+export type ProjectLinks = {
+  live?: Fillable<string>;
+  code?: Fillable<string>;
+  devpost?: Fillable<string>;
 };
+
+/** One big number. `value` is shown as written ("59/60", "73%", "Top 5"). */
+export type Stat = {
+  value: string;
+  caption: string;
+};
+
+export type FeaturedProject = {
+  slug: string;
+  name: string;
+  event: string;
+  /** Extra event facts, e.g. "36 hours · team of 3". */
+  eventMeta?: string;
+  /** Prize line(s) as they appear on Devpost or the site. */
+  awards?: string[];
+  /** How many of `awards` are prizes (used to count prizes site-wide). */
+  prizeCount?: number;
+  oneLiner: string;
+  /** The headline number shown big on the card. */
+  stat: Stat;
+  /** Optional second, smaller number. */
+  stat2?: Stat;
+  stack: string[];
+  links: ProjectLinks;
+  team?: string[];
+  /** Screenshot in /public/projects (captured by `npm run capture`). */
+  image?: string;
+};
+
+export type MiniProject = {
+  slug: string;
+  name: string;
+  context: string;
+  description: string;
+  stack: string[];
+  links: ProjectLinks;
+  /** Screenshot in /public/projects, or an ink drawing when there's no live site. */
+  image?: string;
+  art?: "terminal" | "fall-alert";
+};
+
+/** Map pins. Positions are projected in src/components/journey/usMap.ts. */
+export type PlaceId =
+  | "state-college"
+  | "pittsburgh"
+  | "college-park"
+  | "berkeley"
+  | "atlanta"
+  | "inglewood"
+  | "san-francisco";
+
+export type JourneyStop = {
+  id: string;
+  place: PlaceId;
+  city: string;
+  event: string;
+  dates: string;
+  project?: string;
+  /** Slug of a featured project or more-build (for the thumbnail). */
+  projectSlug?: string;
+  prize?: string;
+  story: string;
+  stat: Stat;
+  /** Where the date and location were confirmed. */
+  source: string;
+  sourceUrl?: string;
+};
+
+export type Role = {
+  role: string;
+  org: string;
+  dates: string;
+  location?: string;
+  description: string;
+  icon: "integral" | "candles" | "bank" | "robot";
+};
+
+export type Leadership = {
+  role: string;
+  org: string;
+  dates: string;
+  description: string;
+};
+
+export type SkillGroup = {
+  heading: string;
+  tags: string[];
+};
+
+export type Sticker = {
+  id: string;
+  lines: string[];
+  shape: "circle" | "ticket" | "hex" | "rounded" | "flame" | "braces" | "burst" | "bubble";
+  tone: "red" | "yellow" | "paper";
+};
+
+export type SpillItem =
+  | { kind: "eightball" }
+  | { kind: "bubble"; text: string; lang: string; label: string }
+  | { kind: "book"; label: string }
+  | { kind: "candles" }
+  | { kind: "laptop" }
+  | { kind: "cat" }
+  | { kind: "horse" }
+  | { kind: "meme" }
+  | { kind: "network" };
