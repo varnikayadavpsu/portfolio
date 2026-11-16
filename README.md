@@ -85,4 +85,12 @@ scripts/        todos.mjs, capture-projects.mjs, screenshots.mjs
 
 ## Deploy
 
-Not deployed. When ready: push the branch, import it on Vercel (it detects Next.js and the static export). `siteUrl` in `site.ts` is used for absolute Open Graph URLs.
+Live at [varnikayadav.com](https://varnikayadav.com), hosted on Vercel (project `portfolio`). The Vercel project isn't connected to this repo, so pushing to GitHub doesn't update the site. Deploy from a clean copy of `main`:
+
+```bash
+npx vercel@latest login                     # once per machine
+npx vercel@latest link --yes --project portfolio
+npx vercel@latest deploy --prod --yes
+```
+
+Vercel detects Next.js and the static export. `siteUrl` in `site.ts` is used for absolute Open Graph URLs.
